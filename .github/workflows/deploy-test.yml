@@ -31,4 +31,7 @@ jobs:
             bin/Release/net8.0/publish/OpenGen.dll \
             scripts/gencode.sh \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/OpenGen/
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "chmod +x /mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/OpenGen/gencode.sh"
           rm /tmp/deploy_key
