@@ -26,7 +26,7 @@ jobs:
           echo "$SSH_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           rsync -avz \
-            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
             bin/Release/net8.0/publish/OpenGen.dll \
             bin/Release/net8.0/publish/gencode.sh \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/GencodePlugin/
