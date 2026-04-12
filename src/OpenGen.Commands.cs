@@ -4,6 +4,7 @@ using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
+using C = CounterStrikeSharp.API.Modules.Utils.ChatColors;
 
 namespace OpenGen;
 
@@ -24,7 +25,7 @@ public partial class OpenGen
         var steamId    = player.SteamID;
         var scriptPath = Path.Combine(ModuleDirectory, "gencode.sh");
 
-        player.PrintToChat($" \x08Fetching \x04{gencode}\x08...");
+        player.PrintToChat($" {C.Grey}Fetching gencode{C.Grey}...");
 
         Task.Run(() => FetchAndGive(gencode, userId, steamId, scriptPath));
     }
@@ -85,7 +86,7 @@ public partial class OpenGen
         if (detail == null)
         {
             Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" \x02✗ \x01{lastError ?? "Unknown error"}."));
+                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}{lastError ?? "Unknown error"}."));
             return;
         }
 
@@ -93,7 +94,7 @@ public partial class OpenGen
             !WeaponClasses.TryGetValue(defIndex, out var className))
         {
             Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" \x02✗ \x01Unknown weapon defindex \x04{detail.ItemId}\x01."));
+                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported weapon {C.Green}{detail.ItemName} {C.Default}(defindex {C.Green}{detail.ItemId}{C.Default})."));
             return;
         }
 
@@ -122,7 +123,11 @@ public partial class OpenGen
             if (weaponPtr == nint.Zero)
             {
                 _pendingGive.Remove(steamId);
-                p.PrintToChat(" \x02✗ \x01" + "Failed to give weapon.");
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+            }
+            else
+            {
+                p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
             }
         });
     }
