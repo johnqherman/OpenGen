@@ -1,0 +1,33 @@
+name: Deploy to Test Server
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        run: dotnet publish -c Release
+
+      - name: Deploy via rsync
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          rsync -avz \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no" \
+            bin/Release/net8.0/publish/OpenGen.dll \
+            bin/Release/net8.0/publish/gencode.sh \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/GencodePlugin/
+          rm /tmp/deploy_key
