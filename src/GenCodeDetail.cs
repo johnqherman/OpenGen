@@ -5,6 +5,7 @@ namespace OpenGen;
 public class GenCodeDetail
 {
     [JsonPropertyName("Item_ID")]        public string ItemId        { get; set; } = "";
+    [JsonPropertyName("Item_Name")]      public string ItemName      { get; set; } = "";
     [JsonPropertyName("Skin_ID")]        public string SkinId        { get; set; } = "";
     [JsonPropertyName("Pattern_ID")]     public string PatternId     { get; set; } = "";
     [JsonPropertyName("Float_Value")]    public string FloatValue    { get; set; } = "0";
