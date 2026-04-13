@@ -10,18 +10,18 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
-    private static void StripItemIf(CCSPlayerController player, Func<string, bool> match)
+    private static void StripItemIf(CCSPlayerController player, Func<string, bool> match, nint exclude = default)
     {
         var services = player.PlayerPawn.Value?.WeaponServices;
         if (services == null) return;
         var toRemove = services.MyWeapons
             .Select(h => h.Value)
-            .Where(w => w?.IsValid == true && match(w.DesignerName))
+            .Where(w => w?.IsValid == true && w.Handle != exclude && match(w.DesignerName))
             .ToList();
         if (toRemove.Count == 0) return;
 
         var active = services.ActiveWeapon.Value;
-        if (active?.IsValid == true && match(active.DesignerName))
+        if (active?.IsValid == true && active.Handle != exclude && match(active.DesignerName))
             services.ActiveWeapon.Raw = UInt32.MaxValue;
 
         foreach (var w in toRemove)
@@ -178,27 +178,18 @@ public partial class OpenGen
             var p = Utilities.GetPlayerFromUserid(userId ?? 0);
             if (p == null || !p.IsValid || !p.PawnIsAlive) return;
 
-            if (className.Contains("knife"))
-                StripItemIf(p, n => n.Contains("knife"));
+            _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
+            var weaponPtr = p.GiveNamedItem(className);
 
-            Server.NextFrame(() =>
+            if (weaponPtr == nint.Zero)
             {
-                var p2 = Utilities.GetPlayerFromUserid(userId ?? 0);
-                if (p2 == null || !p2.IsValid || !p2.PawnIsAlive) return;
-
-                _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
-                var weaponPtr = p2.GiveNamedItem(className);
-
-                if (weaponPtr == nint.Zero)
-                {
-                    _pendingGive.Remove(steamId);
-                    p2.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-                }
-                else
-                {
-                    p2.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
-                }
-            });
+                _pendingGive.Remove(steamId);
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+            }
+            else
+            {
+                p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
+            }
         });
     }
 }

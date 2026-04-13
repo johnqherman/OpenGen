@@ -23,6 +23,16 @@ public partial class OpenGen
 
             _pendingGive.Remove(player.SteamID);
             ApplySkin(player, weapon, pending);
+
+            if (pending.ClassName.Contains("knife"))
+            {
+                var newHandle = weapon.Handle;
+                Server.NextFrame(() =>
+                {
+                    if (player.IsValid && player.PawnIsAlive)
+                        StripItemIf(player, n => n.Contains("knife"), exclude: newHandle);
+                });
+            }
         }
         catch (Exception ex)
         {
