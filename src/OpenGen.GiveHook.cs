@@ -38,7 +38,7 @@ public partial class OpenGen
 
     internal static bool IsGloveDefIndex(ushort defIndex) => GloveDefIndexes.Contains(defIndex);
 
-    internal void ApplyGloves(CCSPlayerController player, ushort defIndex, PendingSkin pending)
+    private void ApplyGloves(CCSPlayerController player, ushort defIndex, PendingSkin pending)
     {
         var pawn = player.PlayerPawn.Value;
         if (pawn == null) return;
