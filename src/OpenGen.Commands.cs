@@ -158,18 +158,24 @@ public partial class OpenGen
             else if (IsGloveClass(className))
                 StripItemIf(p, IsGloveClass);
 
-            _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
-            var weaponPtr = p.GiveNamedItem(className);
+            Server.NextFrame(() =>
+            {
+                var p2 = Utilities.GetPlayerFromUserid(userId ?? 0);
+                if (p2 == null || !p2.IsValid || !p2.PawnIsAlive) return;
 
-            if (weaponPtr == nint.Zero)
-            {
-                _pendingGive.Remove(steamId);
-                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-            }
-            else
-            {
-                p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
-            }
+                _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
+                var weaponPtr = p2.GiveNamedItem(className);
+
+                if (weaponPtr == nint.Zero)
+                {
+                    _pendingGive.Remove(steamId);
+                    p2.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+                }
+                else
+                {
+                    p2.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
+                }
+            });
         });
     }
 }
