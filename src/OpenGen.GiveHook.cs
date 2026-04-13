@@ -65,7 +65,7 @@ public partial class OpenGen
         SetOrAddAttr.Invoke(staticAttrs, "set item texture seed",   (float)pending.Seed);
         SetOrAddAttr.Invoke(staticAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
 
-        pawn.SetBodygroup("default_gloves", 1);
+        pawn.AcceptInput("SetBodygroup", value: "default_gloves,1");
     }
 
     private void ApplySkin(CCSPlayerController player, CBasePlayerWeapon weapon, PendingSkin pending)
@@ -94,7 +94,7 @@ public partial class OpenGen
             SetOrAddAttr.Invoke(dynAttrs, $"sticker slot {slot} wear", stickerWear);
         }
 
-        if (!pending.ClassName.Contains("knife") && !IsGloveClass(pending.ClassName))
+        if (!pending.ClassName.Contains("knife"))
             weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
     }
 }
