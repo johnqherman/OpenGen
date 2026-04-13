@@ -10,6 +10,21 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
+    internal static bool IsGloveClass(string name) =>
+        name.Contains("glove") || name.Contains("handwrap");
+
+    private static void StripItemIf(CCSPlayerController player, Func<string, bool> match)
+    {
+        var services = player.PlayerPawn.Value?.WeaponServices;
+        if (services == null) return;
+        var toRemove = services.MyWeapons
+            .Select(h => h.Value)
+            .Where(w => w?.IsValid == true && match(w.DesignerName))
+            .ToList();
+        foreach (var w in toRemove)
+            w!.Remove();
+    }
+
     private void CmdGive(CCSPlayerController? player, CommandInfo info)
     {
         if (player == null || !player.IsValid || !player.PawnIsAlive) return;
@@ -90,11 +105,32 @@ public partial class OpenGen
             return;
         }
 
-        if (!ushort.TryParse(detail.ItemId, out var defIndex) ||
-            !WeaponClasses.TryGetValue(defIndex, out var className))
+        if (!ushort.TryParse(detail.ItemId, out var defIndex))
         {
             Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported weapon {C.Green}{detail.ItemName} {C.Default}(defindex {C.Green}{detail.ItemId}{C.Default})."));
+                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Invalid item ID {C.Green}{detail.ItemId}{C.Default}."));
+            return;
+        }
+
+        if (!WeaponClasses.TryGetValue(defIndex, out var className))
+        {
+            if (TryGetAgentModel(defIndex, out var modelPath))
+            {
+                var agentName = detail.ItemName;
+                Server.NextFrame(() =>
+                {
+                    var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                    if (p == null || !p.IsValid) return;
+                    _agentModels[steamId] = modelPath;
+                    if (p.PawnIsAlive)
+                        p.PlayerPawn.Value?.SetModel(modelPath);
+                    p.PrintToChat($" {C.Green}✓ {C.Default}{agentName}");
+                });
+                return;
+            }
+
+            Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
+                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item {C.Green}{detail.ItemName} {C.Default}(defindex {C.Green}{detail.ItemId}{C.Default})."));
             return;
         }
 
@@ -116,6 +152,11 @@ public partial class OpenGen
         {
             var p = Utilities.GetPlayerFromUserid(userId ?? 0);
             if (p == null || !p.IsValid || !p.PawnIsAlive) return;
+
+            if (className.Contains("knife"))
+                StripItemIf(p, n => n.Contains("knife"));
+            else if (IsGloveClass(className))
+                StripItemIf(p, IsGloveClass);
 
             _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
             var weaponPtr = p.GiveNamedItem(className);

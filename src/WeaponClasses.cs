@@ -4,6 +4,7 @@ public partial class OpenGen
 {
     private static readonly Dictionary<ushort, string> WeaponClasses = new()
     {
+        // weapons
         { 1,   "weapon_deagle" },
         { 2,   "weapon_elite" },
         { 3,   "weapon_fiveseven" },
@@ -38,6 +39,8 @@ public partial class OpenGen
         { 28,  "weapon_negev" },
         { 29,  "weapon_sawedoff" },
         { 35,  "weapon_nova" },
+
+        // knives
         { 42,  "weapon_knife" },
         { 59,  "weapon_knife_t" },
         { 500, "weapon_knife_bayonet" },
@@ -60,5 +63,15 @@ public partial class OpenGen
         { 523, "weapon_knife_widowmaker" },
         { 525, "weapon_knife_skeleton" },
         { 526, "weapon_knife_kukri" },
+
+        // gloves
+        { 5027, "weapon_bloodhound_gloves" },
+        { 5028, "weapon_motorcycle_gloves" },
+        { 5029, "weapon_slick_gloves" },
+        { 5030, "weapon_sport_gloves" },
+        { 5031, "weapon_studded_gloves" },
+        { 5032, "weapon_studded_bloodhound_gloves" },
+        { 5033, "weapon_t_gloves" },
+        { 5034, "weapon_handwrap_leathery" },
     };
 }

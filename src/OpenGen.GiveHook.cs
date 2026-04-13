@@ -57,6 +57,7 @@ public partial class OpenGen
             SetOrAddAttr.Invoke(dynAttrs, $"sticker slot {slot} wear", stickerWear);
         }
 
-        weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
+        if (!pending.ClassName.Contains("knife") && !IsGloveClass(pending.ClassName))
+            weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
     }
 }

@@ -29,8 +29,11 @@ public partial class OpenGen : BasePlugin
     public override void Load(bool hotReload)
     {
         _ = LoadSkinLegacyMapAsync();
+        _ = LoadAgentMapAsync();
         AddCommand("css_g", "Give weapon from cs2inspects.com gencode", CmdGive);
         VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPost, HookMode.Post);
+        RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawnPost, HookMode.Post);
+        RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnectPost, HookMode.Post);
     }
 
     public override void Unload(bool hotReload)
