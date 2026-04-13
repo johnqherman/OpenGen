@@ -157,6 +157,32 @@ public partial class OpenGen
                 return;
             }
 
+            if (defIndex is 5600 or 5200)
+            {
+                var defaultModel = defIndex == 5600
+                    ? "characters/models/ctm_sas/ctm_sas.vmdl"
+                    : "characters/models/tm_phoenix/tm_phoenix.vmdl";
+                var agentName = detail.ItemName;
+                Server.NextFrame(() =>
+                {
+                    var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                    if (p == null || !p.IsValid) return;
+                    _agentModels[steamId] = defaultModel;
+                    if (p.PawnIsAlive)
+                    {
+                        p.PlayerPawn.Value?.SetModel(defaultModel);
+                        if (_equippedGloves.TryGetValue(steamId, out var gloves))
+                            Server.NextFrame(() =>
+                            {
+                                if (p.IsValid && p.PawnIsAlive)
+                                    ApplyGloves(p, gloves.DefIndex, gloves.Pending);
+                            });
+                    }
+                    p.PrintToChat($" {C.Green}✓ {C.Default}{agentName}");
+                });
+                return;
+            }
+
             Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
                 ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item {C.Green}{detail.ItemName} {C.Default}(defindex {C.Green}{detail.ItemId}{C.Default})."));
             return;
