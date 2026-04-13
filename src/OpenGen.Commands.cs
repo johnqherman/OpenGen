@@ -10,22 +10,25 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
-    private static void StripItemIf(CCSPlayerController player, Func<string, bool> match)
+    private static void StripItemIf(CCSPlayerController player, Func<string, bool> match, nint exclude = default)
     {
         var services = player.PlayerPawn.Value?.WeaponServices;
         if (services == null) return;
-        var toRemove = services.MyWeapons
-            .Select(h => h.Value)
-            .Where(w => w?.IsValid == true && match(w.DesignerName))
+
+        var toStrip = services.MyWeapons
+            .Where(h => { var w = h.Value; return w?.IsValid == true && w.Handle != exclude && match(w.DesignerName); })
             .ToList();
-        if (toRemove.Count == 0) return;
 
-        var active = services.ActiveWeapon.Value;
-        if (active?.IsValid == true && match(active.DesignerName))
-            services.ActiveWeapon.Raw = UInt32.MaxValue;
+        if (toStrip.Count == 0) return;
 
-        foreach (var w in toRemove)
-            w!.Remove();
+        foreach (var h in toStrip)
+        {
+            if (services.ActiveWeapon.Raw == h.Raw)
+                services.ActiveWeapon.Raw = UInt32.MaxValue;
+
+            h.Raw = UInt32.MaxValue;
+            h.Value?.AcceptInput("Kill");
+        }
     }
 
     private void CmdGive(CCSPlayerController? player, CommandInfo info)
