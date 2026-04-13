@@ -171,26 +171,17 @@ public partial class OpenGen
             {
                 var knife = FindWeapon(p, n => n.Contains("knife"));
                 if (knife != null)
-                    p.PlayerPawn.Value!.RemovePlayerItem(knife);
-
-                Server.NextFrame(() =>
                 {
-                    var p2 = Utilities.GetPlayerFromUserid(userId ?? 0);
-                    if (p2 == null || !p2.IsValid || !p2.PawnIsAlive) return;
+                    knife.AttributeManager.Item.ItemDefinitionIndex = defIndex;
+                    ApplySkin(p, knife, new PendingSkin(className, paintKit, seed, wear, stickers, defIndex));
+                    knife.AcceptInput("SubclassChange", value: className);
 
-                    _pendingGive[steamId] = new PendingSkin("weapon_knife", paintKit, seed, wear, stickers, defIndex);
-                    p2.GiveNamedItem("weapon_knife");
-
-                    if (_pendingGive.ContainsKey(steamId))
-                    {
-                        _pendingGive.Remove(steamId);
-                        p2.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-                    }
-                    else
-                    {
-                        p2.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
-                    }
-                });
+                    p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
+                }
+                else
+                {
+                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}No knife found.");
+                }
                 return;
             }
 
