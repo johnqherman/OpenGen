@@ -23,13 +23,10 @@ public partial class OpenGen
 
         foreach (var h in toStrip)
         {
-            var weapon = h.Value!;
-
             if (services.ActiveWeapon.Raw == h.Raw)
                 services.ActiveWeapon.Raw = UInt32.MaxValue;
 
-            h.Raw = UInt32.MaxValue;
-            weapon.AcceptInput("Kill");
+            h.Value!.AcceptInput("Kill");
         }
     }
 
@@ -186,7 +183,7 @@ public partial class OpenGen
             if (className.Contains("knife"))
                 StripItemIf(p, n => n.Contains("knife"));
 
-            Server.NextFrame(() =>
+            Server.NextFrame(() => Server.NextFrame(() =>
             {
                 var p2 = Utilities.GetPlayerFromUserid(userId ?? 0);
                 if (p2 == null || !p2.IsValid || !p2.PawnIsAlive) return;
@@ -203,7 +200,7 @@ public partial class OpenGen
                 {
                     p2.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
                 }
-            });
+            }));
         });
     }
 }
