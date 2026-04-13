@@ -174,6 +174,31 @@ public partial class OpenGen
                 {
                     knife.AttributeManager.Item.ItemDefinitionIndex = defIndex;
                     ApplySkin(p, knife, new PendingSkin(className, paintKit, seed, wear, stickers));
+
+                    if (KnifeModels.TryGetValue(defIndex, out var knifeModel))
+                        knife.SetModel(knifeModel);
+
+                    var weapServices = p.PlayerPawn.Value?.WeaponServices;
+                    if (weapServices != null)
+                    {
+                        var knifeH  = weapServices.MyWeapons.FirstOrDefault(h => h.Value?.Handle == knife.Handle);
+                        var otherH  = weapServices.MyWeapons.FirstOrDefault(h =>
+                        {
+                            var w = h.Value;
+                            return w?.IsValid == true && !w.DesignerName.Contains("knife");
+                        });
+
+                        if (knifeH != null && otherH != null)
+                        {
+                            weapServices.ActiveWeapon.Raw = otherH.Raw;
+                            Server.NextFrame(() =>
+                            {
+                                if (p.IsValid && p.PawnIsAlive)
+                                    p.PlayerPawn.Value!.WeaponServices!.ActiveWeapon.Raw = knifeH.Raw;
+                            });
+                        }
+                    }
+
                     p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
                     return;
                 }
