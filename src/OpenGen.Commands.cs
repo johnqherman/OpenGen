@@ -23,11 +23,13 @@ public partial class OpenGen
 
         foreach (var h in toStrip)
         {
+            var weapon = h.Value!;
+
             if (services.ActiveWeapon.Raw == h.Raw)
                 services.ActiveWeapon.Raw = UInt32.MaxValue;
 
             h.Raw = UInt32.MaxValue;
-            h.Value?.AcceptInput("Kill");
+            weapon.AcceptInput("Kill");
         }
     }
 
