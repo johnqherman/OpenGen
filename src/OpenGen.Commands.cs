@@ -10,9 +10,6 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
-    internal static bool IsGloveClass(string name) =>
-        name.Contains("glove") || name.Contains("handwrap");
-
     private static void StripItemIf(CCSPlayerController player, Func<string, bool> match)
     {
         var services = player.PlayerPawn.Value?.WeaponServices;
@@ -21,6 +18,12 @@ public partial class OpenGen
             .Select(h => h.Value)
             .Where(w => w?.IsValid == true && match(w.DesignerName))
             .ToList();
+        if (toRemove.Count == 0) return;
+
+        var active = services.ActiveWeapon.Value;
+        if (active?.IsValid == true && match(active.DesignerName))
+            services.ActiveWeapon.Raw = UInt32.MaxValue;
+
         foreach (var w in toRemove)
             w!.Remove();
     }
@@ -112,6 +115,34 @@ public partial class OpenGen
             return;
         }
 
+        int.TryParse(detail.SkinId,    out var paintKit);
+        int.TryParse(detail.PatternId, out var seed);
+        float.TryParse(detail.FloatValue, NumberStyles.Float,
+                       CultureInfo.InvariantCulture, out var wear);
+
+        var stickers = new[]
+        {
+            (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value),
+            (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value),
+            (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value),
+            (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value),
+            (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value),
+        };
+
+        if (IsGloveDefIndex(defIndex))
+        {
+            var gloveName = detail.ItemName;
+            var pending   = new PendingSkin("", paintKit, seed, wear, stickers);
+            Server.NextFrame(() =>
+            {
+                var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                if (p == null || !p.IsValid || !p.PawnIsAlive) return;
+                ApplyGloves(p, defIndex, pending);
+                p.PrintToChat($" {C.Green}✓ {C.Default}{gloveName}");
+            });
+            return;
+        }
+
         if (!WeaponClasses.TryGetValue(defIndex, out var className))
         {
             if (TryGetAgentModel(defIndex, out var modelPath))
@@ -134,20 +165,6 @@ public partial class OpenGen
             return;
         }
 
-        int.TryParse(detail.SkinId,    out var paintKit);
-        int.TryParse(detail.PatternId, out var seed);
-        float.TryParse(detail.FloatValue, NumberStyles.Float,
-                       CultureInfo.InvariantCulture, out var wear);
-
-        var stickers = new[]
-        {
-            (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value),
-            (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value),
-            (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value),
-            (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value),
-            (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value),
-        };
-
         Server.NextFrame(() =>
         {
             var p = Utilities.GetPlayerFromUserid(userId ?? 0);
@@ -155,8 +172,6 @@ public partial class OpenGen
 
             if (className.Contains("knife"))
                 StripItemIf(p, n => n.Contains("knife"));
-            else if (IsGloveClass(className))
-                StripItemIf(p, IsGloveClass);
 
             Server.NextFrame(() =>
             {

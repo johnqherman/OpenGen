@@ -31,6 +31,43 @@ public partial class OpenGen
         return HookResult.Continue;
     }
 
+    private static readonly HashSet<ushort> GloveDefIndexes = new()
+    {
+        5027, 5028, 5029, 5030, 5031, 5032, 5033, 5034,
+    };
+
+    internal static bool IsGloveDefIndex(ushort defIndex) => GloveDefIndexes.Contains(defIndex);
+
+    internal void ApplyGloves(CCSPlayerController player, ushort defIndex, PendingSkin pending)
+    {
+        var pawn = player.PlayerPawn.Value;
+        if (pawn == null) return;
+
+        var item = pawn.EconGloves;
+        item.ItemDefinitionIndex = defIndex;
+
+        item.ItemIDLow  = (uint)(_nextItemId & 0xFFFFFFFF);
+        item.ItemIDHigh = (uint)(_nextItemId >> 32);
+        item.ItemID     = _nextItemId++;
+        item.AccountID  = (uint)player.SteamID;
+        item.Initialized = true;
+
+        item.AttributeList.Attributes.RemoveAll();
+        item.NetworkedDynamicAttributes.Attributes.RemoveAll();
+
+        var dynAttrs = item.NetworkedDynamicAttributes.Handle;
+        SetOrAddAttr.Invoke(dynAttrs, "set item texture prefab", (float)pending.PaintKit);
+        SetOrAddAttr.Invoke(dynAttrs, "set item texture seed",   (float)pending.Seed);
+        SetOrAddAttr.Invoke(dynAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
+
+        var staticAttrs = item.AttributeList.Handle;
+        SetOrAddAttr.Invoke(staticAttrs, "set item texture prefab", (float)pending.PaintKit);
+        SetOrAddAttr.Invoke(staticAttrs, "set item texture seed",   (float)pending.Seed);
+        SetOrAddAttr.Invoke(staticAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
+
+        pawn.SetBodygroup("default_gloves", 1);
+    }
+
     private void ApplySkin(CCSPlayerController player, CBasePlayerWeapon weapon, PendingSkin pending)
     {
         weapon.AttributeManager.Item.AttributeList.Attributes.RemoveAll();
