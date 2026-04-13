@@ -102,6 +102,13 @@ public partial class OpenGen
         SetOrAddAttr.Invoke(staticAttrs, "set item texture seed",   (float)pending.Seed);
         SetOrAddAttr.Invoke(staticAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
 
+        var currentModel = pawn.CBodyComponent?.SceneNode?.GetSkeletonInstance()?.ModelState.ModelName ?? "";
+        if (!string.IsNullOrEmpty(currentModel))
+        {
+            pawn.SetModel("characters/models/tm_jumpsuit/tm_jumpsuit_varianta.vmdl");
+            pawn.SetModel(currentModel);
+        }
+
         pawn.AcceptInput("SetBodygroup", value: "default_gloves,0");
         Server.NextFrame(() =>
         {
