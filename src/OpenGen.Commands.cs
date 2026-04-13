@@ -18,6 +18,12 @@ public partial class OpenGen
             .Select(h => h.Value)
             .Where(w => w?.IsValid == true && match(w.DesignerName))
             .ToList();
+        if (toRemove.Count == 0) return;
+
+        var active = services.ActiveWeapon.Value;
+        if (active?.IsValid == true && match(active.DesignerName))
+            services.ActiveWeapon.Raw = UInt32.MaxValue;
+
         foreach (var w in toRemove)
             w!.AcceptInput("Kill");
     }
@@ -148,7 +154,15 @@ public partial class OpenGen
                     if (p == null || !p.IsValid) return;
                     _agentModels[steamId] = modelPath;
                     if (p.PawnIsAlive)
+                    {
                         p.PlayerPawn.Value?.SetModel(modelPath);
+                        if (_equippedGloves.TryGetValue(steamId, out var gloves))
+                            Server.NextFrame(() =>
+                            {
+                                if (p.IsValid && p.PawnIsAlive)
+                                    ApplyGloves(p, gloves.DefIndex, gloves.Pending);
+                            });
+                    }
                     p.PrintToChat($" {C.Green}✓ {C.Default}{agentName}");
                 });
                 return;

@@ -94,7 +94,15 @@ public partial class OpenGen
         Server.NextFrame(() =>
         {
             if (player.IsValid && player.PawnIsAlive)
+            {
                 player.PlayerPawn.Value?.SetModel(model);
+                if (_equippedGloves.TryGetValue(player.SteamID, out var gloves))
+                    Server.NextFrame(() =>
+                    {
+                        if (player.IsValid && player.PawnIsAlive)
+                            ApplyGloves(player, gloves.DefIndex, gloves.Pending);
+                    });
+            }
         });
 
         return HookResult.Continue;
@@ -103,7 +111,10 @@ public partial class OpenGen
     private HookResult OnPlayerDisconnectPost(EventPlayerDisconnect ev, GameEventInfo _)
     {
         if (ev.Userid != null)
+        {
             _agentModels.Remove(ev.Userid.SteamID);
+            _equippedGloves.Remove(ev.Userid.SteamID);
+        }
         return HookResult.Continue;
     }
 }

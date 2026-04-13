@@ -20,6 +20,7 @@ public partial class OpenGen : BasePlugin
 
     private readonly Dictionary<int, bool> _skinLegacyMap = new();
     private readonly Dictionary<ulong, PendingSkin> _pendingGive = new();
+    private readonly Dictionary<ulong, (ushort DefIndex, PendingSkin Pending)> _equippedGloves = new();
     private ulong _nextItemId = 65578;
 
     private record PendingSkin(

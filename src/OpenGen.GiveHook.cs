@@ -40,6 +40,8 @@ public partial class OpenGen
 
     private void ApplyGloves(CCSPlayerController player, ushort defIndex, PendingSkin pending)
     {
+        _equippedGloves[player.SteamID] = (defIndex, pending);
+
         var pawn = player.PlayerPawn.Value;
         if (pawn == null) return;
 
@@ -75,7 +77,12 @@ public partial class OpenGen
         SetOrAddAttr.Invoke(staticAttrs, "set item texture seed",   (float)pending.Seed);
         SetOrAddAttr.Invoke(staticAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
 
-        pawn.AcceptInput("SetBodygroup", value: "default_gloves,1");
+        pawn.AcceptInput("SetBodygroup", value: "default_gloves,0");
+        Server.NextFrame(() =>
+        {
+            if (!player.IsValid || !player.PawnIsAlive) return;
+            player.PlayerPawn.Value?.AcceptInput("SetBodygroup", value: "default_gloves,1");
+        });
     }
 
     private void ApplySkin(CCSPlayerController player, CBasePlayerWeapon weapon, PendingSkin pending)
