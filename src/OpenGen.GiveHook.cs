@@ -6,6 +6,28 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
+    private HookResult OnGiveNamedItemPre(DynamicHook hook)
+    {
+        try
+        {
+            var itemServices = hook.GetParam<CCSPlayer_ItemServices>(0);
+            var player = itemServices.Pawn.Value?.Controller.Value?.As<CCSPlayerController>();
+            if (player == null || !player.IsValid) return HookResult.Continue;
+
+            if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
+            if (pending.DefIndex == 0) return HookResult.Continue;
+
+            var itemView = hook.GetParam<CEconItemView>(3);
+            if (itemView != null && itemView.Handle != nint.Zero)
+                itemView.ItemDefinitionIndex = pending.DefIndex;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[OpenGen] OnGiveNamedItemPre exception: {ex.Message}");
+        }
+        return HookResult.Continue;
+    }
+
     private HookResult OnGiveNamedItemPost(DynamicHook hook)
     {
         try
@@ -19,7 +41,10 @@ public partial class OpenGen
             if (player == null || !player.IsValid) return HookResult.Continue;
 
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
-            if (weapon.DesignerName != pending.ClassName) return HookResult.Continue;
+
+            var isKnife = pending.ClassName.Contains("knife");
+            if (isKnife ? !weapon.DesignerName.Contains("knife") : weapon.DesignerName != pending.ClassName)
+                return HookResult.Continue;
 
             _pendingGive.Remove(player.SteamID);
             ApplySkin(player, weapon, pending);

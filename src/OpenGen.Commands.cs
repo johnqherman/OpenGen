@@ -170,17 +170,26 @@ public partial class OpenGen
             if (className.Contains("knife"))
             {
                 var knife = FindWeapon(p, n => n.Contains("knife"));
-                if (knife != null)
+                var weaponServices = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                if (knife != null && weaponServices != null)
                 {
-                    knife.AttributeManager.Item.ItemDefinitionIndex = defIndex;
-                    ApplySkin(p, knife, new PendingSkin(className, paintKit, seed, wear, stickers, defIndex));
-                    knife.AcceptInput("SubclassChange", value: className);
+                    DropWeapon(weaponServices.Handle, knife.Handle);
+                    knife.Remove();
+                }
 
-                    p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
+                var giveClass = p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife";
+                var spawnedClass = WeaponClasses.TryGetValue(defIndex, out var kc) ? kc : giveClass;
+                _pendingGive[steamId] = new PendingSkin(spawnedClass, paintKit, seed, wear, stickers, defIndex);
+                p.GiveNamedItem(giveClass);
+
+                if (_pendingGive.ContainsKey(steamId))
+                {
+                    _pendingGive.Remove(steamId);
+                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
                 }
                 else
                 {
-                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}No knife found.");
+                    p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
                 }
                 return;
             }
