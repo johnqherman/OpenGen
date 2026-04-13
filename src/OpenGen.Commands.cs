@@ -21,30 +21,6 @@ public partial class OpenGen
             .Select(h => h.Value)
             .Where(w => w?.IsValid == true && match(w.DesignerName))
             .ToList();
-        if (toRemove.Count == 0) return;
-
-        var active = services.ActiveWeapon.Value;
-        if (active?.IsValid == true && match(active.DesignerName))
-        {
-            var other = services.MyWeapons
-                .Select(h => h.Value)
-                .FirstOrDefault(w => w?.IsValid == true && !match(w.DesignerName));
-            if (other != null)
-                player.PlayerPawn.Value?.SwitchToWeapon(other);
-        }
-
-        foreach (var w in toRemove)
-            w!.Remove();
-    }
-
-    private static void StripWearablesIf(CCSPlayerController player, Func<string, bool> match)
-    {
-        var services = player.PlayerPawn.Value?.WeaponServices;
-        if (services?.MyWearables == null) return;
-        var toRemove = services.MyWearables
-            .Select(h => h.Value)
-            .Where(w => w?.IsValid == true && match(w.DesignerName))
-            .ToList();
         foreach (var w in toRemove)
             w!.Remove();
     }
@@ -180,7 +156,7 @@ public partial class OpenGen
             if (className.Contains("knife"))
                 StripItemIf(p, n => n.Contains("knife"));
             else if (IsGloveClass(className))
-                StripWearablesIf(p, IsGloveClass);
+                StripItemIf(p, IsGloveClass);
 
             Server.NextFrame(() =>
             {
