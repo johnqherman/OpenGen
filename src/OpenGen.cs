@@ -25,7 +25,8 @@ public partial class OpenGen : BasePlugin
 
     private record PendingSkin(
         string ClassName, int PaintKit, int Seed, float Wear,
-        (int Slot, int Id, float Wear)[] Stickers);
+        (int Slot, int Id, float Wear)[] Stickers,
+        ushort DefIndex = 0);
 
     public override void Load(bool hotReload)
     {

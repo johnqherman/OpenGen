@@ -171,37 +171,27 @@ public partial class OpenGen
             {
                 var knife = FindWeapon(p, n => n.Contains("knife"));
                 if (knife != null)
+                    p.PlayerPawn.Value!.RemovePlayerItem(knife);
+
+                Server.NextFrame(() =>
                 {
-                    knife.AttributeManager.Item.ItemDefinitionIndex = defIndex;
-                    ApplySkin(p, knife, new PendingSkin(className, paintKit, seed, wear, stickers));
+                    var p2 = Utilities.GetPlayerFromUserid(userId ?? 0);
+                    if (p2 == null || !p2.IsValid || !p2.PawnIsAlive) return;
 
-                    if (KnifeModels.TryGetValue(defIndex, out var knifeModel))
-                        knife.SetModel(knifeModel);
+                    _pendingGive[steamId] = new PendingSkin("weapon_knife", paintKit, seed, wear, stickers, defIndex);
+                    p2.GiveNamedItem("weapon_knife");
 
-                    var weapServices = p.PlayerPawn.Value?.WeaponServices;
-                    if (weapServices != null)
+                    if (_pendingGive.ContainsKey(steamId))
                     {
-                        var knifeH  = weapServices.MyWeapons.FirstOrDefault(h => h.Value?.Handle == knife.Handle);
-                        var otherH  = weapServices.MyWeapons.FirstOrDefault(h =>
-                        {
-                            var w = h.Value;
-                            return w?.IsValid == true && !w.DesignerName.Contains("knife");
-                        });
-
-                        if (knifeH != null && otherH != null)
-                        {
-                            weapServices.ActiveWeapon.Raw = otherH.Raw;
-                            Server.NextFrame(() =>
-                            {
-                                if (p.IsValid && p.PawnIsAlive)
-                                    p.PlayerPawn.Value!.WeaponServices!.ActiveWeapon.Raw = knifeH.Raw;
-                            });
-                        }
+                        _pendingGive.Remove(steamId);
+                        p2.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
                     }
-
-                    p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
-                    return;
-                }
+                    else
+                    {
+                        p2.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
+                    }
+                });
+                return;
             }
 
             _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);

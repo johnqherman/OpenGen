@@ -96,6 +96,9 @@ public partial class OpenGen
         weapon.AttributeManager.Item.ItemIDHigh = (uint)(itemId >> 32);
         weapon.AttributeManager.Item.AccountID  = (uint)player.SteamID;
 
+        if (pending.DefIndex != 0)
+            weapon.AttributeManager.Item.ItemDefinitionIndex = pending.DefIndex;
+
         weapon.FallbackPaintKit = pending.PaintKit;
         weapon.FallbackSeed     = pending.Seed;
         weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;

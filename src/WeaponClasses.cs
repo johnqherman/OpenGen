@@ -65,30 +65,4 @@ public partial class OpenGen
         { 526, "weapon_knife_kukri" },
     };
 
-    // knife models
-    private static readonly Dictionary<ushort, string> KnifeModels = new()
-    {
-        { 42,  "models/weapons/v_knife_default_ct.vmdl" },
-        { 59,  "models/weapons/v_knife_default_t.vmdl" },
-        { 500, "models/weapons/v_knife_bayonet.vmdl" },
-        { 503, "models/weapons/v_knife_css.vmdl" },
-        { 505, "models/weapons/v_knife_flip.vmdl" },
-        { 506, "models/weapons/v_knife_gut.vmdl" },
-        { 507, "models/weapons/v_knife_karam.vmdl" },
-        { 508, "models/weapons/v_knife_m9_bay.vmdl" },
-        { 509, "models/weapons/v_knife_tactical.vmdl" },
-        { 512, "models/weapons/v_knife_falchion.vmdl" },
-        { 514, "models/weapons/v_knife_survival_bowie.vmdl" },
-        { 515, "models/weapons/v_knife_butterfly.vmdl" },
-        { 516, "models/weapons/v_knife_push.vmdl" },
-        { 517, "models/weapons/v_knife_cord.vmdl" },
-        { 518, "models/weapons/v_knife_canis.vmdl" },
-        { 519, "models/weapons/v_knife_ursus.vmdl" },
-        { 520, "models/weapons/v_knife_gypsy_jackknife.vmdl" },
-        { 521, "models/weapons/v_knife_outdoor.vmdl" },
-        { 522, "models/weapons/v_knife_stiletto.vmdl" },
-        { 523, "models/weapons/v_knife_widowmaker.vmdl" },
-        { 525, "models/weapons/v_knife_skeleton.vmdl" },
-        { 526, "models/weapons/v_knife_kukri.vmdl" },
-    };
 }
