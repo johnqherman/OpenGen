@@ -23,9 +23,10 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p OpenGen
+          mkdir -p OpenGen/gamedata
           cp bin/Release/net8.0/publish/OpenGen.dll OpenGen/
           cp bin/Release/net8.0/publish/scripts/gencode.sh OpenGen/
+          cp gamedata/opengen.json OpenGen/gamedata/
           zip -r OpenGen-${{ github.ref_name }}.zip OpenGen/
 
       - name: Upload release asset

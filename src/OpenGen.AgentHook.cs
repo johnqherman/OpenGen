@@ -112,8 +112,10 @@ public partial class OpenGen
     {
         if (ev.Userid != null)
         {
-            _agentModels.Remove(ev.Userid.SteamID);
-            _equippedGloves.Remove(ev.Userid.SteamID);
+            var steamId = ev.Userid.SteamID;
+            _agentModels.Remove(steamId);
+            _equippedGloves.Remove(steamId);
+            FreeEconItemView(steamId);
         }
         return HookResult.Continue;
     }

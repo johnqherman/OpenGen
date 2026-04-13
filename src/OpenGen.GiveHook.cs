@@ -17,9 +17,9 @@ public partial class OpenGen
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
             if (pending.DefIndex == 0) return HookResult.Continue;
 
-            var itemView = hook.GetParam<CEconItemView>(3);
-            if (itemView != null && itemView.Handle != nint.Zero)
-                itemView.ItemDefinitionIndex = pending.DefIndex;
+            var ptr = GetOrBuildEconItemView(player.SteamID, pending.DefIndex,
+                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers);
+            hook.SetParam(3, ptr);
         }
         catch (Exception ex)
         {
