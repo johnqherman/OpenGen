@@ -78,6 +78,7 @@ public partial class OpenGen : BasePlugin
         var view = new CEconItemView(ptr);
         view.Initialized            = true;
         view.ItemDefinitionIndex    = defIndex;
+        
         var itemId = _nextItemId++;
         view.ItemID     = itemId;
         view.ItemIDLow  = (uint)(itemId & 0xFFFFFFFF);

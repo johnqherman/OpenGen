@@ -177,8 +177,9 @@ public partial class OpenGen
                     knife.Remove();
                 }
 
-                _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers, defIndex);
-                p.GiveNamedItem(className);
+                var giveClass = p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife";
+                _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
+                p.GiveNamedItem(giveClass);
 
                 if (_pendingGive.ContainsKey(steamId))
                 {
