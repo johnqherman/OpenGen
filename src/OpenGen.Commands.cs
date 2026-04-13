@@ -18,14 +18,8 @@ public partial class OpenGen
             .Select(h => h.Value)
             .Where(w => w?.IsValid == true && match(w.DesignerName))
             .ToList();
-        if (toRemove.Count == 0) return;
-
-        var active = services.ActiveWeapon.Value;
-        if (active?.IsValid == true && match(active.DesignerName))
-            services.ActiveWeapon.Raw = UInt32.MaxValue;
-
         foreach (var w in toRemove)
-            w!.Remove();
+            w!.AcceptInput("Kill");
     }
 
     private void CmdGive(CCSPlayerController? player, CommandInfo info)

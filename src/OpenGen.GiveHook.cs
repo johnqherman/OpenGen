@@ -44,6 +44,16 @@ public partial class OpenGen
         if (pawn == null) return;
 
         var item = pawn.EconGloves;
+
+        item.ItemDefinitionIndex = 0;
+        item.ItemIDLow  = 0;
+        item.ItemIDHigh = 0;
+        item.ItemID     = 0;
+        item.AccountID  = 0;
+        item.Initialized = false;
+        item.AttributeList.Attributes.RemoveAll();
+        item.NetworkedDynamicAttributes.Attributes.RemoveAll();
+
         item.ItemDefinitionIndex = defIndex;
 
         item.ItemIDLow  = (uint)(_nextItemId & 0xFFFFFFFF);
