@@ -125,14 +125,18 @@ public partial class OpenGen : BasePlugin
             SetOrAddAttr.Invoke(attrs.Handle, "kill eater",            (float)statTrakValue);
             SetOrAddAttr.Invoke(attrs.Handle, "kill eater score type", 0f);
         }
+        var nameTagOffset = Schema.GetSchemaOffset("CEconItemView", "m_szCustomName");
+        var nameTagPtr    = ptr + nameTagOffset;
         if (!string.IsNullOrEmpty(nameTag))
         {
-            var offset   = Schema.GetSchemaOffset("CEconItemView", "m_szCustomName");
-            var namePtr  = ptr + offset;
             var nameBytes = System.Text.Encoding.UTF8.GetBytes(nameTag);
             var len = Math.Min(nameBytes.Length, 127);
-            Marshal.Copy(nameBytes, 0, namePtr, len);
-            Marshal.WriteByte(namePtr, len, 0);
+            Marshal.Copy(nameBytes, 0, nameTagPtr, len);
+            Marshal.WriteByte(nameTagPtr, len, 0);
+        }
+        else
+        {
+            Marshal.WriteByte(nameTagPtr, 0, 0);
         }
 
         return ptr;
