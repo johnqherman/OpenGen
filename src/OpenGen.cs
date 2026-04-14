@@ -114,6 +114,8 @@ public partial class OpenGen : BasePlugin
             SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset x", charmX);
             SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset y", charmY);
             SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset z", charmZ);
+            if (charmSeed != 0)
+                SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 sticker", UintAsFloat((uint)charmSeed));
         }
         if (statTrakEnabled)
         {
