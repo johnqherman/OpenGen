@@ -67,21 +67,7 @@ public partial class OpenGen
             if (!isKnife)
             {
                 weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
-
-                var gearSlot = weapon.VData?.As<CCSWeaponBaseVData>()?.GearSlot ?? gear_slot_t.GEAR_SLOT_RIFLE;
-                var slotBack = gearSlot == gear_slot_t.GEAR_SLOT_PISTOL ? "slot2" : "slot1";
-                var p = player;
-                
-                Server.NextFrame(() =>
-                {
-                    if (!p.IsValid || !p.PawnIsAlive) return;
-                    p.ExecuteClientCommand("slot3");
-                    Server.NextFrame(() =>
-                    {
-                        if (!p.IsValid || !p.PawnIsAlive) return;
-                        p.ExecuteClientCommand(slotBack);
-                    });
-                });
+                weapon.AcceptInput("SubclassChange", value: weapon.DesignerName);
             }
         }
         catch (Exception ex)
