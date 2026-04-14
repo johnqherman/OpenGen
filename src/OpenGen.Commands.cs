@@ -17,12 +17,18 @@ public partial class OpenGen
             .FirstOrDefault(w => w?.IsValid == true && match(w.DesignerName));
     }
 
+    private static readonly HashSet<string> PistolClasses = new()
+    {
+        "weapon_deagle", "weapon_elite", "weapon_fiveseven", "weapon_glock",
+        "weapon_hkp2000", "weapon_p250", "weapon_tec9", "weapon_cz75a",
+        "weapon_usp_silencer", "weapon_revolver", "weapon_p2000",
+    };
+
     private static CBasePlayerWeapon? FindSlotConflict(CCSPlayerController player, string targetClass)
     {
-        var temp = Utilities.CreateEntityByName<CBasePlayerWeapon>(targetClass);
-        var targetSlot = temp?.VData?.As<CCSWeaponBaseVData>()?.GearSlot;
-        temp?.Remove();
-        if (targetSlot == null) return null;
+        var targetSlot = targetClass.Contains("knife") ? gear_slot_t.GEAR_SLOT_KNIFE
+            : PistolClasses.Contains(targetClass)     ? gear_slot_t.GEAR_SLOT_PISTOL
+            :                                           gear_slot_t.GEAR_SLOT_RIFLE;
 
         return player.PlayerPawn.Value?.WeaponServices?.MyWeapons
             .Select(h => h.Value)
