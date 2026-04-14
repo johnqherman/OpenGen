@@ -66,16 +66,20 @@ public partial class OpenGen
             {
                 if (id == 0) continue;
                 SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} id",       UintAsFloat((uint)id));
-                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} wear",     stickerWear);
-                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} scale",    1f);
+                if (x != 0 || y != 0)
+                    SetOrAddAttr.Invoke(dynAttrs, $"sticker slot {slot} schema", 0f);
                 SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} offset x", x);
                 SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} offset y", y);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} wear",     stickerWear);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} scale",    1f);
                 SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} rotation", r);
                 SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} id",       UintAsFloat((uint)id));
-                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} wear",     stickerWear);
-                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} scale",    1f);
+                if (x != 0 || y != 0)
+                    SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} schema", 0f);
                 SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} offset x", x);
                 SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} offset y", y);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} wear",     stickerWear);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} scale",    1f);
                 SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} rotation", r);
             }
 

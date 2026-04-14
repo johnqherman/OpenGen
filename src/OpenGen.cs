@@ -107,10 +107,12 @@ public partial class OpenGen : BasePlugin
             Console.WriteLine($"[OpenGen][DEBUG]   sticker slot={slot} id={id} wear={stickerWear} x={x} y={y} r={r}");
             if (id == 0) { Console.WriteLine($"[OpenGen][DEBUG]     ^ skipped (id==0)"); continue; }
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} scale",    1f);
+            if (x != 0 || y != 0)
+                SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} schema", 0f);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset x", x);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset y", y);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} scale",    1f);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} rotation", r);
             Console.WriteLine($"[OpenGen][DEBUG]     ^ applied");
         }
