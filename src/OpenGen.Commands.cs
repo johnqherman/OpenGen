@@ -183,30 +183,14 @@ public partial class OpenGen
         float.TryParse(detail.FloatValue, NumberStyles.Float,
                        CultureInfo.InvariantCulture, out var wear);
 
-        var rawStickers = new[]
+        var stickers = DeduplicateStickerSlots(new[]
         {
             (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
             (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
             (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
             (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
             (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
-        };
-
-        Console.WriteLine("[OpenGen][DEBUG] Raw stickers from API:");
-        for (int i = 0; i < rawStickers.Length; i++)
-        {
-            var (rs, rid, rw, rx, ry, rr) = rawStickers[i];
-            Console.WriteLine($"[OpenGen][DEBUG]   [{i}] slot={rs} id={rid} wear={rw} x={rx} y={ry} r={rr}");
-        }
-
-        var stickers = DeduplicateStickerSlots(rawStickers);
-
-        Console.WriteLine("[OpenGen][DEBUG] Stickers after dedup:");
-        for (int i = 0; i < stickers.Length; i++)
-        {
-            var (ds, did, dw, dx, dy, dr) = stickers[i];
-            Console.WriteLine($"[OpenGen][DEBUG]   [{i}] slot={ds} id={did} wear={dw} x={dx} y={dy} r={dr}");
-        }
+        });
 
         var charmId         = detail.KeyChainId;
         var charmSeed       = detail.KeyChainPattern;

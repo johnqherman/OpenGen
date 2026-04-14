@@ -20,9 +20,6 @@ public partial class OpenGen : BasePlugin
     private static readonly MemoryFunctionWithReturn<nint, nint> CEconItemViewCtor =
         new(GameData.GetSignature("CEconItemView::CEconItemView"));
 
-    private static readonly MemoryFunctionWithReturn<nint, nint, nint> CEconItemViewCopyAssign =
-        new(GameData.GetSignature("CEconItemView::operator="));
-
     private static readonly int DropWeaponOffset =
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 24 : 25;
 
@@ -101,11 +98,9 @@ public partial class OpenGen : BasePlugin
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture prefab", (float)paintKit);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture seed",   (float)seed);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture wear",   wear > 0f ? wear : 0.01f);
-        Console.WriteLine($"[OpenGen][DEBUG] GetOrBuildEconItemView: defIndex={defIndex} paintKit={paintKit} seed={seed} wear={wear} stickers.Length={stickers.Length}");
         foreach (var (slot, id, stickerWear, x, y, r) in stickers)
         {
-            Console.WriteLine($"[OpenGen][DEBUG]   sticker slot={slot} id={id} wear={stickerWear} x={x} y={y} r={r}");
-            if (id == 0) { Console.WriteLine($"[OpenGen][DEBUG]     ^ skipped (id==0)"); continue; }
+            if (id == 0) continue;
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
             if (x != 0 || y != 0)
                 SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} schema", 0f);
@@ -114,7 +109,6 @@ public partial class OpenGen : BasePlugin
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} scale",    1f);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} rotation", r);
-            Console.WriteLine($"[OpenGen][DEBUG]     ^ applied");
         }
         if (charmId != 0)
         {
