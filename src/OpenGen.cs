@@ -20,6 +20,9 @@ public partial class OpenGen : BasePlugin
     private static readonly MemoryFunctionWithReturn<nint, nint> CEconItemViewCtor =
         new(GameData.GetSignature("CEconItemView::CEconItemView"));
 
+    private static readonly MemoryFunctionWithReturn<nint, nint, nint> CEconItemViewCopyAssign =
+        new(GameData.GetSignature("CEconItemView::operator="));
+
     private static readonly int DropWeaponOffset =
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 24 : 25;
 
