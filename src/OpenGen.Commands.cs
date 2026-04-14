@@ -32,9 +32,83 @@ public partial class OpenGen
         var steamId    = player.SteamID;
         var scriptPath = Path.Combine(ModuleDirectory, "gencode.sh");
 
-        player.PrintToChat($" {C.Grey}Fetching gencode{C.Grey}...");
-
         Task.Run(() => FetchAndGive(gencode, userId, steamId, scriptPath));
+    }
+
+    private void CmdGiveParsed(CCSPlayerController? player, CommandInfo info)
+    {
+        if (player == null || !player.IsValid || !player.PawnIsAlive) return;
+
+        if (info.ArgCount < 5)
+        {
+            player.PrintToChat(" Usage: !gen <defindex> <skin_id> <pattern> <float> [<sticker_id> <wear> ...]");
+            return;
+        }
+
+        if (!ushort.TryParse(info.ArgByIndex(1), out var defIndex))
+        {
+            player.PrintToChat($" {C.DarkRed}✗ {C.Default}Invalid defindex.");
+            return;
+        }
+
+        int.TryParse(info.ArgByIndex(2), out var paintKit);
+        int.TryParse(info.ArgByIndex(3), out var seed);
+        float.TryParse(info.ArgByIndex(4), NumberStyles.Float, CultureInfo.InvariantCulture, out var wear);
+
+        var stickers = new (int Slot, int Id, float Wear, float X, float Y, float R)[5];
+        for (int i = 0; i < 5; i++)
+        {
+            int argBase = 5 + i * 2;
+            if (info.ArgCount < argBase + 2) break;
+            int.TryParse(info.ArgByIndex(argBase), out var id);
+            float.TryParse(info.ArgByIndex(argBase + 1), NumberStyles.Float,
+                           CultureInfo.InvariantCulture, out var stickerWear);
+            stickers[i] = (i, id, stickerWear, 0f, 0f, 0f);
+        }
+
+        var pending = new PendingSkin(
+            WeaponClasses.TryGetValue(defIndex, out var cls) ? cls : "",
+            paintKit, seed, wear, stickers, defIndex);
+
+        Server.NextFrame(() =>
+        {
+            var p = player;
+            if (!p.IsValid || !p.PawnIsAlive) return;
+
+            if (IsGloveDefIndex(defIndex))
+            {
+                ApplyGloves(p, defIndex, pending);
+                return;
+            }
+
+            if (!WeaponClasses.TryGetValue(defIndex, out var className))
+            {
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported defindex {C.Green}{defIndex}{C.Default}.");
+                return;
+            }
+
+            var isKnife   = className.Contains("knife");
+            var giveClass = isKnife
+                ? (p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife")
+                : className;
+
+            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className);
+            if (existing != null)
+            {
+                var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                if (ws != null) DropWeapon(ws.Handle, existing.Handle);
+                existing.Remove();
+            }
+
+            _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
+            p.GiveNamedItem(giveClass);
+
+            if (_pendingGive.ContainsKey(p.SteamID))
+            {
+                _pendingGive.Remove(p.SteamID);
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+            }
+        });
     }
 
     private void FetchAndGive(string gencode, int? userId, ulong steamId, string scriptPath)
@@ -111,23 +185,31 @@ public partial class OpenGen
 
         var stickers = new[]
         {
-            (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value),
-            (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value),
-            (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value),
-            (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value),
-            (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value),
+            (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
+            (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
+            (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
+            (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
+            (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
         };
+
+        var charmId         = detail.KeyChainId;
+        var charmSeed       = detail.KeyChainPattern;
+        var charmX          = detail.KeyChainX;
+        var charmY          = detail.KeyChainY;
+        var charmZ          = detail.KeyChainZ;
+        var statTrakEnabled = detail.StatTrakEnabled == "1";
+        var statTrakValue   = detail.StatTrakValue;
+        var nameTag         = detail.NameTag;
 
         if (IsGloveDefIndex(defIndex))
         {
-            var gloveName = detail.ItemName;
-            var pending   = new PendingSkin("", paintKit, seed, wear, stickers);
+            var pending = new PendingSkin("", paintKit, seed, wear,
+                new (int, int, float, float, float, float)[5]);
             Server.NextFrame(() =>
             {
                 var p = Utilities.GetPlayerFromUserid(userId ?? 0);
                 if (p == null || !p.IsValid || !p.PawnIsAlive) return;
                 ApplyGloves(p, defIndex, pending);
-                p.PrintToChat($" {C.Green}✓ {C.Default}{gloveName}");
             });
             return;
         }
@@ -136,7 +218,6 @@ public partial class OpenGen
         {
             if (TryGetAgentModel(defIndex, out var modelPath))
             {
-                var agentName = detail.ItemName;
                 Server.NextFrame(() =>
                 {
                     var p = Utilities.GetPlayerFromUserid(userId ?? 0);
@@ -152,7 +233,6 @@ public partial class OpenGen
                                     ApplyGloves(p, gloves.DefIndex, gloves.Pending);
                             });
                     }
-                    p.PrintToChat($" {C.Green}✓ {C.Default}{agentName}");
                 });
                 return;
             }
@@ -162,7 +242,6 @@ public partial class OpenGen
                 var defaultModel = defIndex == 5600
                     ? "characters/models/ctm_sas/ctm_sas.vmdl"
                     : "characters/models/tm_phoenix/tm_phoenix.vmdl";
-                var agentName = detail.ItemName;
                 Server.NextFrame(() =>
                 {
                     var p = Utilities.GetPlayerFromUserid(userId ?? 0);
@@ -178,13 +257,12 @@ public partial class OpenGen
                                     ApplyGloves(p, gloves.DefIndex, gloves.Pending);
                             });
                     }
-                    p.PrintToChat($" {C.Green}✓ {C.Default}{agentName}");
                 });
                 return;
             }
 
             Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item {C.Green}{detail.ItemName} {C.Default}(defindex {C.Green}{detail.ItemId}{C.Default})."));
+                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item (defindex {C.Green}{detail.ItemId}{C.Default})."));
             return;
         }
 
@@ -206,17 +284,14 @@ public partial class OpenGen
                 existing.Remove();
             }
 
-            _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
+            _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
+                charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
             p.GiveNamedItem(giveClass);
 
             if (_pendingGive.ContainsKey(steamId))
             {
                 _pendingGive.Remove(steamId);
                 p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-            }
-            else
-            {
-                p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
             }
         });
     }

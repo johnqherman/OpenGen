@@ -42,14 +42,18 @@ public partial class OpenGen : BasePlugin
 
     private record PendingSkin(
         string ClassName, int PaintKit, int Seed, float Wear,
-        (int Slot, int Id, float Wear)[] Stickers,
-        ushort DefIndex = 0);
+        (int Slot, int Id, float Wear, float X, float Y, float R)[] Stickers,
+        ushort DefIndex = 0,
+        int CharmId = 0, int CharmSeed = 0, float CharmX = 0f, float CharmY = 0f, float CharmZ = 0f,
+        bool StatTrakEnabled = false, int StatTrakValue = 0,
+        string NameTag = "");
 
     public override void Load(bool hotReload)
     {
         _ = LoadSkinLegacyMapAsync();
         _ = LoadAgentMapAsync();
-        AddCommand("css_g", "Give weapon from cs2inspects.com gencode", CmdGive);
+        AddCommand("css_g",   "Give weapon skin by combo ID",    CmdGive);
+        AddCommand("css_gen", "Give weapon skin by explicit fields", CmdGiveParsed);
         VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPre,  HookMode.Pre);
         VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPost, HookMode.Post);
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawnPost, HookMode.Post);
@@ -66,8 +70,11 @@ public partial class OpenGen : BasePlugin
     }
 
     internal nint GetOrBuildEconItemView(ulong steamId, ushort defIndex,
-        int paintKit, int seed, float wear, (int Slot, int Id, float Wear)[] stickers,
-        bool isKnife = false)
+        int paintKit, int seed, float wear, (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers,
+        bool isKnife = false,
+        int charmId = 0, int charmSeed = 0, float charmX = 0f, float charmY = 0f, float charmZ = 0f,
+        bool statTrakEnabled = false, int statTrakValue = 0,
+        string nameTag = "")
     {
         if (!_econItemViews.TryGetValue(steamId, out var ptr))
         {
@@ -91,11 +98,36 @@ public partial class OpenGen : BasePlugin
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture prefab", (float)paintKit);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture seed",   (float)seed);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture wear",   wear > 0f ? wear : 0.01f);
-        foreach (var (slot, id, stickerWear) in stickers)
+        foreach (var (slot, id, stickerWear, x, y, r) in stickers)
         {
             if (id == 0) continue;
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",   UintAsFloat((uint)id));
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear", stickerWear);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset x", x);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset y", y);
+            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} rotation", r);
+        }
+        if (charmId != 0)
+        {
+            SetOrAddAttr.Invoke(attrs.Handle, "charm id",       UintAsFloat((uint)charmId));
+            SetOrAddAttr.Invoke(attrs.Handle, "charm seed",     (float)charmSeed);
+            SetOrAddAttr.Invoke(attrs.Handle, "charm offset x", charmX);
+            SetOrAddAttr.Invoke(attrs.Handle, "charm offset y", charmY);
+            SetOrAddAttr.Invoke(attrs.Handle, "charm offset z", charmZ);
+        }
+        if (statTrakEnabled)
+        {
+            SetOrAddAttr.Invoke(attrs.Handle, "kill eater",            (float)statTrakValue);
+            SetOrAddAttr.Invoke(attrs.Handle, "kill eater score type", 0f);
+        }
+        if (!string.IsNullOrEmpty(nameTag))
+        {
+            var offset   = Schema.GetSchemaOffset("CEconItemView", "m_szCustomName");
+            var namePtr  = ptr + offset;
+            var nameBytes = System.Text.Encoding.UTF8.GetBytes(nameTag);
+            var len = Math.Min(nameBytes.Length, 127);
+            Marshal.Copy(nameBytes, 0, namePtr, len);
+            Marshal.WriteByte(namePtr, len, 0);
         }
 
         return ptr;

@@ -18,7 +18,9 @@ public partial class OpenGen
 
             var isKnife = pending.ClassName.Contains("knife");
             var ptr = GetOrBuildEconItemView(player.SteamID, pending.DefIndex,
-                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers, isKnife);
+                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers, isKnife,
+                pending.CharmId, pending.CharmSeed, pending.CharmX, pending.CharmY, pending.CharmZ,
+                pending.StatTrakEnabled, pending.StatTrakValue, pending.NameTag);
             hook.SetParam(3, ptr);
         }
         catch (Exception ex)
@@ -51,7 +53,7 @@ public partial class OpenGen
             weapon.FallbackPaintKit = pending.PaintKit;
             weapon.FallbackSeed     = pending.Seed;
             weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;
-            weapon.FallbackStatTrak = -1;
+            weapon.FallbackStatTrak = pending.StatTrakEnabled ? pending.StatTrakValue : -1;
 
             if (!isKnife)
                 weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
