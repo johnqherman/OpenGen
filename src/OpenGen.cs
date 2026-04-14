@@ -109,11 +109,11 @@ public partial class OpenGen : BasePlugin
         }
         if (charmId != 0)
         {
-            SetOrAddAttr.Invoke(attrs.Handle, "charm id",       UintAsFloat((uint)charmId));
-            SetOrAddAttr.Invoke(attrs.Handle, "charm seed",     (float)charmSeed);
-            SetOrAddAttr.Invoke(attrs.Handle, "charm offset x", charmX);
-            SetOrAddAttr.Invoke(attrs.Handle, "charm offset y", charmY);
-            SetOrAddAttr.Invoke(attrs.Handle, "charm offset z", charmZ);
+            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 id",       UintAsFloat((uint)charmId));
+            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 seed",     (float)charmSeed);
+            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset x", charmX);
+            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset y", charmY);
+            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset z", charmZ);
         }
         if (statTrakEnabled)
         {
