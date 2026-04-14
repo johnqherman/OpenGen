@@ -4,6 +4,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
+using CounterStrikeSharp.API.Modules.Utils;
 
 namespace OpenGen;
 
@@ -18,6 +19,14 @@ public partial class OpenGen : BasePlugin
 
     private static readonly MemoryFunctionWithReturn<nint, nint> CEconItemViewCtor =
         new(GameData.GetSignature("CEconItemView::CEconItemView"));
+
+    internal static void DropWeapon(nint weaponServicesPtr, nint weaponPtr)
+    {
+        VirtualFunction.CreateVoid<nint, nint, Vector?, Vector?>(
+            weaponServicesPtr,
+            GameData.GetOffset("CCSPlayer_WeaponServices::DropWeapon")
+        )(weaponServicesPtr, weaponPtr, null, null);
+    }
 
     private static float UintAsFloat(uint v) => BitConverter.Int32BitsToSingle((int)v);
 

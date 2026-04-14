@@ -20,14 +20,14 @@ public partial class OpenGen
     private static CBasePlayerWeapon? FindSlotConflict(CCSPlayerController player, string targetClass)
     {
         var temp = Utilities.CreateEntityByName<CBasePlayerWeapon>(targetClass);
-        var targetSlot = (temp?.VData as CCSWeaponBaseVData)?.GearSlot;
+        var targetSlot = temp?.VData?.As<CCSWeaponBaseVData>()?.GearSlot;
         temp?.Remove();
         if (targetSlot == null) return null;
 
         return player.PlayerPawn.Value?.WeaponServices?.MyWeapons
             .Select(h => h.Value)
             .FirstOrDefault(w => w?.IsValid == true &&
-                (w.VData as CCSWeaponBaseVData)?.GearSlot == targetSlot);
+                w.VData?.As<CCSWeaponBaseVData>()?.GearSlot == targetSlot);
     }
 
     private void CmdGive(CCSPlayerController? player, CommandInfo info)
@@ -113,7 +113,13 @@ public partial class OpenGen
             }
             else
             {
-                FindSlotConflict(p, giveClass)?.Remove();
+                var conflict = FindSlotConflict(p, giveClass);
+                if (conflict != null)
+                {
+                    var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                    if (ws != null) DropWeapon(ws.Handle, conflict.Handle);
+                    conflict.Remove();
+                }
                 _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
                 p.GiveNamedItem(giveClass);
 
@@ -300,7 +306,13 @@ public partial class OpenGen
             }
             else
             {
-                FindSlotConflict(p, giveClass)?.Remove();
+                var conflict = FindSlotConflict(p, giveClass);
+                if (conflict != null)
+                {
+                    var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                    if (ws != null) DropWeapon(ws.Handle, conflict.Handle);
+                    conflict.Remove();
+                }
                 _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
                     charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
                 p.GiveNamedItem(giveClass);
