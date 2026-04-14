@@ -183,14 +183,14 @@ public partial class OpenGen
         float.TryParse(detail.FloatValue, NumberStyles.Float,
                        CultureInfo.InvariantCulture, out var wear);
 
-        var stickers = new[]
+        var stickers = DeduplicateStickerSlots(new[]
         {
             (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
             (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
             (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
             (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
             (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
-        };
+        });
 
         var charmId         = detail.KeyChainId;
         var charmSeed       = detail.KeyChainPattern;
@@ -294,5 +294,31 @@ public partial class OpenGen
                 p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
             }
         });
+    }
+
+    private static (int Slot, int Id, float Wear, float X, float Y, float R)[] DeduplicateStickerSlots(
+        (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers)
+    {
+        var used   = new HashSet<int>();
+        var result = new (int Slot, int Id, float Wear, float X, float Y, float R)[stickers.Length];
+        int next   = 0;
+
+        for (int i = 0; i < stickers.Length; i++)
+        {
+            var s = stickers[i];
+            if (!used.Contains(s.Slot))
+            {
+                used.Add(s.Slot);
+                result[i] = s;
+            }
+            else
+            {
+                while (next < stickers.Length && used.Contains(next)) next++;
+                used.Add(next);
+                result[i] = s with { Slot = next };
+            }
+        }
+
+        return result;
     }
 }
