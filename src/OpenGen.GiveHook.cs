@@ -55,6 +55,18 @@ public partial class OpenGen
             weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;
             weapon.FallbackStatTrak = pending.StatTrakEnabled ? pending.StatTrakValue : -1;
 
+            var weaponDynAttrs = weapon.AttributeManager.Item.NetworkedDynamicAttributes.Handle;
+            foreach (var (slot, id, stickerWear, x, y, r) in pending.Stickers)
+            {
+                if (id == 0) continue;
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} id",       UintAsFloat((uint)id));
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} wear",     stickerWear);
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} scale",    1f);
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} offset x", x);
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} offset y", y);
+                SetOrAddAttr.Invoke(weaponDynAttrs, $"sticker slot {slot} rotation", r);
+            }
+
             if (!isKnife)
                 weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
         }
