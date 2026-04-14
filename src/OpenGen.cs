@@ -4,7 +4,6 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
-using CounterStrikeSharp.API.Modules.Utils;
 
 namespace OpenGen;
 
@@ -20,16 +19,59 @@ public partial class OpenGen : BasePlugin
     private static readonly MemoryFunctionWithReturn<nint, nint> CEconItemViewCtor =
         new(GameData.GetSignature("CEconItemView::CEconItemView"));
 
-    private static readonly int DropWeaponOffset =
-        RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 24 : 25;
+    private static float UintAsFloat(uint v) => BitConverter.Int32BitsToSingle((int)v);
 
-    internal static void DropWeapon(nint weaponServicesPtr, nint weaponPtr)
+    private void WriteAttributes(nint handle, PendingSkin pending)
     {
-        VirtualFunction.CreateVoid<nint, nint, Vector?, Vector?>(weaponServicesPtr, DropWeaponOffset)
-            .Invoke(weaponServicesPtr, weaponPtr, null, null);
+        SetOrAddAttr.Invoke(handle, "set item texture prefab", (float)pending.PaintKit);
+        SetOrAddAttr.Invoke(handle, "set item texture seed",   (float)pending.Seed);
+        SetOrAddAttr.Invoke(handle, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
+        foreach (var (slot, id, stickerWear, x, y, r) in pending.Stickers)
+        {
+            if (id == 0) continue;
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} id", UintAsFloat((uint)id));
+            if (slot == 4)
+                SetOrAddAttr.Invoke(handle, $"sticker slot {slot} schema", 0f);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} offset x", x);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} offset y", y);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} wear",     stickerWear);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} scale",    1f);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} rotation", r);
+        }
+        if (pending.CharmId != 0)
+        {
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 id",       UintAsFloat((uint)pending.CharmId));
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 seed",     UintAsFloat((uint)pending.CharmSeed));
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 offset x", pending.CharmX);
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 offset y", pending.CharmY);
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 offset z", pending.CharmZ);
+            if (pending.CharmSeed != 0)
+                SetOrAddAttr.Invoke(handle, "keychain slot 0 sticker", UintAsFloat((uint)pending.CharmSeed));
+        }
+        if (pending.StatTrakEnabled)
+        {
+            SetOrAddAttr.Invoke(handle, "kill eater",            (float)pending.StatTrakValue);
+            SetOrAddAttr.Invoke(handle, "kill eater score type", 0f);
+        }
     }
 
-    private static float UintAsFloat(uint v) => BitConverter.Int32BitsToSingle((int)v);
+    private void ApplyToWeapon(CBasePlayerWeapon weapon, PendingSkin pending, ulong steamId)
+    {
+        var isKnife  = pending.ClassName.Contains("knife");
+        var item     = weapon.AttributeManager.Item;
+        item.ItemDefinitionIndex = pending.DefIndex;
+        var dynAttrs = item.NetworkedDynamicAttributes;
+        dynAttrs.Attributes.RemoveAll();
+        WriteAttributes(dynAttrs.Handle, pending);
+
+        weapon.FallbackPaintKit = pending.PaintKit;
+        weapon.FallbackSeed     = pending.Seed;
+        weapon.FallbackWear     = GetBumpedWear(steamId, pending.PaintKit, pending.Wear, pending.Stickers);
+        weapon.FallbackStatTrak = pending.StatTrakEnabled ? pending.StatTrakValue : -1;
+
+        weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
+        weapon.AcceptInput("SubclassChange", value: isKnife ? pending.ClassName : weapon.DesignerName);
+    }
 
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
@@ -70,12 +112,7 @@ public partial class OpenGen : BasePlugin
         _econItemViews.Clear();
     }
 
-    internal nint GetOrBuildEconItemView(ulong steamId, ushort defIndex,
-        int paintKit, int seed, float wear, (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers,
-        bool isKnife = false,
-        int charmId = 0, int charmSeed = 0, float charmX = 0f, float charmY = 0f, float charmZ = 0f,
-        bool statTrakEnabled = false, int statTrakValue = 0,
-        string nameTag = "")
+    private nint GetOrBuildEconItemView(ulong steamId, PendingSkin pending)
     {
         if (_econItemViews.TryGetValue(steamId, out var old))
             Marshal.FreeHGlobal(old);
@@ -84,9 +121,10 @@ public partial class OpenGen : BasePlugin
         CEconItemViewCtor.Invoke(ptr);
         _econItemViews[steamId] = ptr;
 
-        var view = new CEconItemView(ptr);
-        view.Initialized            = true;
-        view.ItemDefinitionIndex    = defIndex;
+        var isKnife = pending.ClassName.Contains("knife");
+        var view    = new CEconItemView(ptr);
+        view.Initialized         = true;
+        view.ItemDefinitionIndex = pending.DefIndex;
 
         var itemId = _nextItemId++;
         view.ItemID     = itemId;
@@ -96,41 +134,13 @@ public partial class OpenGen : BasePlugin
 
         var attrs = view.NetworkedDynamicAttributes;
         attrs.Attributes.RemoveAll();
-        SetOrAddAttr.Invoke(attrs.Handle, "set item texture prefab", (float)paintKit);
-        SetOrAddAttr.Invoke(attrs.Handle, "set item texture seed",   (float)seed);
-        SetOrAddAttr.Invoke(attrs.Handle, "set item texture wear",   wear > 0f ? wear : 0.01f);
-        foreach (var (slot, id, stickerWear, x, y, r) in stickers)
-        {
-            if (id == 0) continue;
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
-            if (slot == 4)
-                SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} schema", 0f);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset x", x);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset y", y);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} scale",    1f);
-            SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} rotation", r);
-        }
-        if (charmId != 0)
-        {
-            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 id",       UintAsFloat((uint)charmId));
-            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 seed",     UintAsFloat((uint)charmSeed));
-            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset x", charmX);
-            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset y", charmY);
-            SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 offset z", charmZ);
-            if (charmSeed != 0)
-                SetOrAddAttr.Invoke(attrs.Handle, "keychain slot 0 sticker", UintAsFloat((uint)charmSeed));
-        }
-        if (statTrakEnabled)
-        {
-            SetOrAddAttr.Invoke(attrs.Handle, "kill eater",            (float)statTrakValue);
-            SetOrAddAttr.Invoke(attrs.Handle, "kill eater score type", 0f);
-        }
+        WriteAttributes(attrs.Handle, pending);
+
         var nameTagOffset = Schema.GetSchemaOffset("CEconItemView", "m_szCustomName");
         var nameTagPtr    = ptr + nameTagOffset;
-        if (!string.IsNullOrEmpty(nameTag))
+        if (!string.IsNullOrEmpty(pending.NameTag))
         {
-            var nameBytes = System.Text.Encoding.UTF8.GetBytes(nameTag);
+            var nameBytes = System.Text.Encoding.UTF8.GetBytes(pending.NameTag);
             var len = Math.Min(nameBytes.Length, 127);
             Marshal.Copy(nameBytes, 0, nameTagPtr, len);
             Marshal.WriteByte(nameTagPtr, len, 0);

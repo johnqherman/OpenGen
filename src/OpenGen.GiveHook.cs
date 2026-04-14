@@ -22,11 +22,7 @@ public partial class OpenGen
 
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
 
-            var isKnife = pending.ClassName.Contains("knife");
-            var ptr = GetOrBuildEconItemView(player.SteamID, pending.DefIndex,
-                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers, isKnife,
-                pending.CharmId, pending.CharmSeed, pending.CharmX, pending.CharmY, pending.CharmZ,
-                pending.StatTrakEnabled, pending.StatTrakValue, pending.NameTag);
+            var ptr = GetOrBuildEconItemView(player.SteamID, pending);
             hook.SetParam(3, ptr);
         }
         catch (Exception ex)
