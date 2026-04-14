@@ -37,6 +37,7 @@ public partial class OpenGen : BasePlugin
     private readonly Dictionary<ulong, PendingSkin>                     _pendingGive    = new();
     private readonly Dictionary<ulong, (ushort DefIndex, PendingSkin Pending)> _equippedGloves = new();
     private readonly Dictionary<ulong, nint> _econItemViews = new();
+    private readonly Dictionary<ulong, Dictionary<int, (float Wear, string StickerFp)>> _stickerWearCache = new();
 
     private ulong _nextItemId = 65578;
 
@@ -140,6 +141,25 @@ public partial class OpenGen : BasePlugin
         }
 
         return ptr;
+    }
+
+    internal float GetBumpedWear(ulong steamId, int paintKit, float wear,
+        (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers)
+    {
+        var baseWear = wear > 0f ? wear : 0.01f;
+
+        if (!stickers.Any(s => s.Id != 0)) return baseWear;
+
+        var fp = string.Join("|", stickers.Where(s => s.Id != 0).Select(s => $"{s.Slot}:{s.Id}"));
+
+        if (!_stickerWearCache.TryGetValue(steamId, out var pkMap))
+            _stickerWearCache[steamId] = pkMap = new();
+
+        if (pkMap.TryGetValue(paintKit, out var cached) && cached.StickerFp != fp)
+            baseWear = Math.Min(cached.Wear + 0.001f, 1.0f);
+
+        pkMap[paintKit] = (baseWear, fp);
+        return baseWear;
     }
 
     internal void FreeEconItemView(ulong steamId)

@@ -115,6 +115,7 @@ public partial class OpenGen
             var steamId = ev.Userid.SteamID;
             _agentModels.Remove(steamId);
             _equippedGloves.Remove(steamId);
+            _stickerWearCache.Remove(steamId);
             FreeEconItemView(steamId);
         }
         return HookResult.Continue;

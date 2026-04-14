@@ -61,7 +61,7 @@ public partial class OpenGen
 
             weapon.FallbackPaintKit = pending.PaintKit;
             weapon.FallbackSeed     = pending.Seed;
-            weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;
+            weapon.FallbackWear     = GetBumpedWear(player.SteamID, pending.PaintKit, pending.Wear, pending.Stickers);
             weapon.FallbackStatTrak = pending.StatTrakEnabled ? pending.StatTrakValue : -1;
 
             if (!isKnife)
