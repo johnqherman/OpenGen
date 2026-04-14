@@ -58,6 +58,27 @@ public partial class OpenGen
             if (_econItemViews.TryGetValue(player.SteamID, out var ourViewPtr))
                 CEconItemViewCopyAssign.Invoke(weapon.AttributeManager.Item.Handle, ourViewPtr);
 
+            // Also write sticker attrs directly to the weapon's attribute lists.
+            // The econ view copy alone doesn't always flush all slots (notably slot 4).
+            var dynAttrs    = weapon.AttributeManager.Item.NetworkedDynamicAttributes.Handle;
+            var staticAttrs = weapon.AttributeManager.Item.AttributeList.Handle;
+            foreach (var (slot, id, stickerWear, x, y, r) in pending.Stickers)
+            {
+                if (id == 0) continue;
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} id",       UintAsFloat((uint)id));
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} wear",     stickerWear);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} scale",    1f);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} offset x", x);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} offset y", y);
+                SetOrAddAttr.Invoke(dynAttrs,    $"sticker slot {slot} rotation", r);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} id",       UintAsFloat((uint)id));
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} wear",     stickerWear);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} scale",    1f);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} offset x", x);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} offset y", y);
+                SetOrAddAttr.Invoke(staticAttrs, $"sticker slot {slot} rotation", r);
+            }
+
             if (!isKnife)
                 weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
         }
