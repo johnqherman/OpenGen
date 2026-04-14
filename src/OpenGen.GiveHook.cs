@@ -15,10 +15,10 @@ public partial class OpenGen
             if (player == null || !player.IsValid) return HookResult.Continue;
 
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
-            if (pending.DefIndex == 0) return HookResult.Continue;
 
+            var isKnife = pending.ClassName.Contains("knife");
             var ptr = GetOrBuildEconItemView(player.SteamID, pending.DefIndex,
-                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers);
+                pending.PaintKit, pending.Seed, pending.Wear, pending.Stickers, isKnife);
             hook.SetParam(3, ptr);
         }
         catch (Exception ex)
@@ -47,7 +47,14 @@ public partial class OpenGen
                 return HookResult.Continue;
 
             _pendingGive.Remove(player.SteamID);
-            ApplySkin(player, weapon, pending);
+
+            weapon.FallbackPaintKit = pending.PaintKit;
+            weapon.FallbackSeed     = pending.Seed;
+            weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;
+            weapon.FallbackStatTrak = -1;
+
+            if (!isKnife)
+                weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
         }
         catch (Exception ex)
         {
@@ -115,38 +122,5 @@ public partial class OpenGen
             if (!player.IsValid || !player.PawnIsAlive) return;
             player.PlayerPawn.Value?.AcceptInput("SetBodygroup", value: "default_gloves,1");
         });
-    }
-
-    private void ApplySkin(CCSPlayerController player, CBasePlayerWeapon weapon, PendingSkin pending)
-    {
-        weapon.AttributeManager.Item.AttributeList.Attributes.RemoveAll();
-        weapon.AttributeManager.Item.NetworkedDynamicAttributes.Attributes.RemoveAll();
-
-        var itemId = _nextItemId++;
-        weapon.AttributeManager.Item.ItemID     = itemId;
-        weapon.AttributeManager.Item.ItemIDLow  = (uint)(itemId & 0xFFFFFFFF);
-        weapon.AttributeManager.Item.ItemIDHigh = (uint)(itemId >> 32);
-        weapon.AttributeManager.Item.AccountID  = (uint)player.SteamID;
-
-        if (pending.DefIndex != 0)
-            weapon.AttributeManager.Item.ItemDefinitionIndex = pending.DefIndex;
-
-        weapon.FallbackPaintKit = pending.PaintKit;
-        weapon.FallbackSeed     = pending.Seed;
-        weapon.FallbackWear     = pending.Wear > 0f ? pending.Wear : 0.01f;
-        weapon.FallbackStatTrak = -1;
-
-        var dynAttrs = weapon.AttributeManager.Item.NetworkedDynamicAttributes.Handle;
-        SetOrAddAttr.Invoke(dynAttrs, "set item texture prefab", (float)pending.PaintKit);
-
-        foreach (var (slot, id, stickerWear) in pending.Stickers)
-        {
-            if (id == 0) continue;
-            SetOrAddAttr.Invoke(dynAttrs, $"sticker slot {slot} id",   UintAsFloat((uint)id));
-            SetOrAddAttr.Invoke(dynAttrs, $"sticker slot {slot} wear", stickerWear);
-        }
-
-        if (!pending.ClassName.Contains("knife"))
-            weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
     }
 }

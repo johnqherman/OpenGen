@@ -193,34 +193,21 @@ public partial class OpenGen
             var p = Utilities.GetPlayerFromUserid(userId ?? 0);
             if (p == null || !p.IsValid || !p.PawnIsAlive) return;
 
-            if (className.Contains("knife"))
+            var isKnife   = className.Contains("knife");
+            var giveClass = isKnife
+                ? (p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife")
+                : className;
+
+            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className);
+            if (existing != null)
             {
-                var knife = FindWeapon(p, n => n.Contains("knife"));
-                var weaponServices = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
-                if (knife != null && weaponServices != null)
-                {
-                    DropWeapon(weaponServices.Handle, knife.Handle);
-                    knife.Remove();
-                }
-
-                var giveClass = p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife";
-                _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
-                p.GiveNamedItem(giveClass);
-
-                if (_pendingGive.ContainsKey(steamId))
-                {
-                    _pendingGive.Remove(steamId);
-                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-                }
-                else
-                {
-                    p.PrintToChat($" {C.Green}✓ {C.Default}{detail.ItemName}");
-                }
-                return;
+                var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                if (ws != null) DropWeapon(ws.Handle, existing.Handle);
+                existing.Remove();
             }
 
-            _pendingGive[steamId] = new PendingSkin(className, paintKit, seed, wear, stickers);
-            var weaponPtr = p.GiveNamedItem(className);
+            _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
+            p.GiveNamedItem(giveClass);
 
             if (_pendingGive.ContainsKey(steamId))
             {

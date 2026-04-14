@@ -66,7 +66,8 @@ public partial class OpenGen : BasePlugin
     }
 
     internal nint GetOrBuildEconItemView(ulong steamId, ushort defIndex,
-        int paintKit, int seed, float wear, (int Slot, int Id, float Wear)[] stickers)
+        int paintKit, int seed, float wear, (int Slot, int Id, float Wear)[] stickers,
+        bool isKnife = false)
     {
         if (!_econItemViews.TryGetValue(steamId, out var ptr))
         {
@@ -78,12 +79,12 @@ public partial class OpenGen : BasePlugin
         var view = new CEconItemView(ptr);
         view.Initialized            = true;
         view.ItemDefinitionIndex    = defIndex;
-        
+
         var itemId = _nextItemId++;
         view.ItemID     = itemId;
         view.ItemIDLow  = (uint)(itemId & 0xFFFFFFFF);
         view.ItemIDHigh = (uint)(itemId >> 32);
-        view.EntityQuality = 3; // melee quality
+        view.EntityQuality = isKnife ? 3 : 4;
 
         var attrs = view.NetworkedDynamicAttributes;
         attrs.Attributes.RemoveAll();
