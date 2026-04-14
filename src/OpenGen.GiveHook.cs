@@ -6,6 +6,12 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
+    private static readonly Dictionary<string, string> SilencedVariantAliases = new()
+    {
+        ["weapon_m4a1_silencer"] = "weapon_m4a1",
+        ["weapon_usp_silencer"]  = "weapon_hkp2000",
+    };
+
     private HookResult OnGiveNamedItemPre(DynamicHook hook)
     {
         try
@@ -45,8 +51,11 @@ public partial class OpenGen
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
 
             var isKnife = pending.ClassName.Contains("knife");
-            if (isKnife ? !weapon.DesignerName.Contains("knife") : weapon.DesignerName != pending.ClassName)
-                return HookResult.Continue;
+            var nameMatch = isKnife
+                ? weapon.DesignerName.Contains("knife")
+                : weapon.DesignerName == pending.ClassName ||
+                  (SilencedVariantAliases.TryGetValue(pending.ClassName, out var alias) && weapon.DesignerName == alias);
+            if (!nameMatch) return HookResult.Continue;
 
             _pendingGive.Remove(player.SteamID);
 

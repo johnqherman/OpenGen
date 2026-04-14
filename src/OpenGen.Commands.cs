@@ -92,7 +92,8 @@ public partial class OpenGen
                 ? (p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife")
                 : className;
 
-            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className);
+            SilencedVariantAliases.TryGetValue(className, out var engineName);
+            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className || n == engineName);
             if (existing != null)
             {
                 var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
@@ -276,7 +277,8 @@ public partial class OpenGen
                 ? (p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife")
                 : className;
 
-            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className);
+            SilencedVariantAliases.TryGetValue(className, out var engineName);
+            var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className || n == engineName);
             if (existing != null)
             {
                 var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
