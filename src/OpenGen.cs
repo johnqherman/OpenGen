@@ -101,15 +101,18 @@ public partial class OpenGen : BasePlugin
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture prefab", (float)paintKit);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture seed",   (float)seed);
         SetOrAddAttr.Invoke(attrs.Handle, "set item texture wear",   wear > 0f ? wear : 0.01f);
+        Console.WriteLine($"[OpenGen][DEBUG] GetOrBuildEconItemView: defIndex={defIndex} paintKit={paintKit} seed={seed} wear={wear} stickers.Length={stickers.Length}");
         foreach (var (slot, id, stickerWear, x, y, r) in stickers)
         {
-            if (id == 0) continue;
+            Console.WriteLine($"[OpenGen][DEBUG]   sticker slot={slot} id={id} wear={stickerWear} x={x} y={y} r={r}");
+            if (id == 0) { Console.WriteLine($"[OpenGen][DEBUG]     ^ skipped (id==0)"); continue; }
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} scale",    1f);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset x", x);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset y", y);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} rotation", r);
+            Console.WriteLine($"[OpenGen][DEBUG]     ^ applied");
         }
         if (charmId != 0)
         {
