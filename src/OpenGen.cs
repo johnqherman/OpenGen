@@ -64,24 +64,6 @@ public partial class OpenGen : BasePlugin
         }
     }
 
-    private void ApplyToWeapon(CBasePlayerWeapon weapon, PendingSkin pending, ulong steamId)
-    {
-        var isKnife  = pending.ClassName.Contains("knife");
-        var item     = weapon.AttributeManager.Item;
-        item.ItemDefinitionIndex = pending.DefIndex;
-        var dynAttrs = item.NetworkedDynamicAttributes;
-        dynAttrs.Attributes.RemoveAll();
-        WriteAttributes(dynAttrs.Handle, pending);
-
-        weapon.FallbackPaintKit = pending.PaintKit;
-        weapon.FallbackSeed     = pending.Seed;
-        weapon.FallbackWear     = GetBumpedWear(steamId, pending.PaintKit, pending.Wear, pending.Stickers);
-        weapon.FallbackStatTrak = pending.StatTrakEnabled ? pending.StatTrakValue : -1;
-
-        weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
-        weapon.AcceptInput("SubclassChange", value: isKnife ? pending.ClassName : weapon.DesignerName);
-    }
-
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
     private readonly Dictionary<int, bool>  _skinLegacyMap  = new();

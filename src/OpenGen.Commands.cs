@@ -115,7 +115,9 @@ public partial class OpenGen
             var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className || n == engineName);
             if (existing != null)
             {
-                ApplyToWeapon(existing, new PendingSkin(className, paintKit, seed, wear, stickers, defIndex), p.SteamID);
+                var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                if (ws != null) DropWeapon(ws.Handle, existing.Handle);
+                existing.Remove();
             }
             else
             {
@@ -126,14 +128,14 @@ public partial class OpenGen
                     if (ws != null) DropWeapon(ws.Handle, conflict.Handle);
                     conflict.Remove();
                 }
-                _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
-                p.GiveNamedItem(giveClass);
+            }
+            _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
+            p.GiveNamedItem(giveClass);
 
-                if (_pendingGive.ContainsKey(p.SteamID))
-                {
-                    _pendingGive.Remove(p.SteamID);
-                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-                }
+            if (_pendingGive.ContainsKey(p.SteamID))
+            {
+                _pendingGive.Remove(p.SteamID);
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
             }
         });
     }
@@ -307,8 +309,9 @@ public partial class OpenGen
             var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == className || n == engineName);
             if (existing != null)
             {
-                ApplyToWeapon(existing, new PendingSkin(className, paintKit, seed, wear, stickers, defIndex,
-                    charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag), steamId);
+                var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
+                if (ws != null) DropWeapon(ws.Handle, existing.Handle);
+                existing.Remove();
             }
             else
             {
@@ -319,15 +322,15 @@ public partial class OpenGen
                     if (ws != null) DropWeapon(ws.Handle, conflict.Handle);
                     conflict.Remove();
                 }
-                _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
-                    charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
-                p.GiveNamedItem(giveClass);
+            }
+            _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
+                charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
+            p.GiveNamedItem(giveClass);
 
-                if (_pendingGive.ContainsKey(steamId))
-                {
-                    _pendingGive.Remove(steamId);
-                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-                }
+            if (_pendingGive.ContainsKey(steamId))
+            {
+                _pendingGive.Remove(steamId);
+                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
             }
         });
     }
