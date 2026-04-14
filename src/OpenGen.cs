@@ -76,12 +76,12 @@ public partial class OpenGen : BasePlugin
         bool statTrakEnabled = false, int statTrakValue = 0,
         string nameTag = "")
     {
-        if (!_econItemViews.TryGetValue(steamId, out var ptr))
-        {
-            ptr = Marshal.AllocHGlobal(Schema.GetClassSize("CEconItemView"));
-            CEconItemViewCtor.Invoke(ptr);
-            _econItemViews[steamId] = ptr;
-        }
+        if (_econItemViews.TryGetValue(steamId, out var old))
+            Marshal.FreeHGlobal(old);
+
+        var ptr = Marshal.AllocHGlobal(Schema.GetClassSize("CEconItemView"));
+        CEconItemViewCtor.Invoke(ptr);
+        _econItemViews[steamId] = ptr;
 
         var view = new CEconItemView(ptr);
         view.Initialized            = true;
