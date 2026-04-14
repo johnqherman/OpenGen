@@ -17,6 +17,19 @@ public partial class OpenGen
             .FirstOrDefault(w => w?.IsValid == true && match(w.DesignerName));
     }
 
+    private static CBasePlayerWeapon? FindSlotConflict(CCSPlayerController player, string targetClass)
+    {
+        var temp = Utilities.CreateEntityByName<CBasePlayerWeapon>(targetClass);
+        var targetSlot = (temp?.VData as CCSWeaponBaseVData)?.GearSlot;
+        temp?.Remove();
+        if (targetSlot == null) return null;
+
+        return player.PlayerPawn.Value?.WeaponServices?.MyWeapons
+            .Select(h => h.Value)
+            .FirstOrDefault(w => w?.IsValid == true &&
+                (w.VData as CCSWeaponBaseVData)?.GearSlot == targetSlot);
+    }
+
     private void CmdGive(CCSPlayerController? player, CommandInfo info)
     {
         if (player == null || !player.IsValid || !player.PawnIsAlive) return;
@@ -100,6 +113,7 @@ public partial class OpenGen
             }
             else
             {
+                FindSlotConflict(p, giveClass)?.Remove();
                 _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
                 p.GiveNamedItem(giveClass);
 
@@ -286,6 +300,7 @@ public partial class OpenGen
             }
             else
             {
+                FindSlotConflict(p, giveClass)?.Remove();
                 _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
                     charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
                 p.GiveNamedItem(giveClass);
