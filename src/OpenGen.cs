@@ -102,8 +102,6 @@ public partial class OpenGen : BasePlugin
         {
             if (id == 0) continue;
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} id",       UintAsFloat((uint)id));
-            if (x != 0 || y != 0)
-                SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} schema", 0f);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset x", x);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} offset y", y);
             SetOrAddAttr.Invoke(attrs.Handle, $"sticker slot {slot} wear",     stickerWear);
