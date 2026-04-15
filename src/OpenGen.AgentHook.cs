@@ -75,6 +75,26 @@ public partial class OpenGen
             return _agentModelPaths.TryGetValue(defIndex, out modelPath!);
     }
 
+    internal void ApplyAgentModel(int? userId, ulong steamId, string modelPath)
+    {
+        Server.NextFrame(() =>
+        {
+            var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+            if (p == null || !p.IsValid) return;
+            _agentModels[steamId] = modelPath;
+            if (p.PawnIsAlive)
+            {
+                p.PlayerPawn.Value?.SetModel(modelPath);
+                if (_equippedGloves.TryGetValue(steamId, out var gloves))
+                    Server.NextFrame(() =>
+                    {
+                        if (p.IsValid && p.PawnIsAlive)
+                            ApplyGloves(p, gloves.DefIndex, gloves.Pending);
+                    });
+            }
+        });
+    }
+
     private void ApplyAgentMap(Dictionary<ushort, string> map)
     {
         lock (_agentModelPaths)
