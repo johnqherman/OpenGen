@@ -72,8 +72,12 @@ public partial class OpenGen
             var switchPlayer = player;
             Server.NextFrame(() =>
             {
-                if (switchPlayer.IsValid && switchPlayer.PawnIsAlive)
-                    switchPlayer.ExecuteClientCommandFromServer(slot);
+                if (!switchPlayer.IsValid || !switchPlayer.PawnIsAlive) return;
+                Server.NextWorldUpdate(() =>
+                {
+                    if (switchPlayer.IsValid && switchPlayer.PawnIsAlive)
+                        switchPlayer.ExecuteClientCommand(slot);
+                });
             });
         }
         catch (Exception ex)
