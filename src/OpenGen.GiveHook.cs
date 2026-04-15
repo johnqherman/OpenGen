@@ -66,12 +66,14 @@ public partial class OpenGen
                 weapon.AcceptInput("SubclassChange", value: weapon.DesignerName);
             }
 
-            var switchWeapon = weapon;
+            var isPistol = !isKnife && (PistolClasses.Contains(pending.ClassName) ||
+                (SilencedVariantAliases.TryGetValue(pending.ClassName, out var pistolAlias) && PistolClasses.Contains(pistolAlias)));
+            var slot = isKnife ? "slot3" : isPistol ? "slot2" : "slot1";
             var switchPlayer = player;
             Server.NextFrame(() =>
             {
-                if (switchPlayer.IsValid && switchPlayer.PawnIsAlive && switchWeapon.IsValid)
-                    switchPlayer.ExecuteClientCommandFromServer($"use {switchWeapon.DesignerName}");
+                if (switchPlayer.IsValid && switchPlayer.PawnIsAlive)
+                    switchPlayer.ExecuteClientCommandFromServer(slot);
             });
         }
         catch (Exception ex)
