@@ -130,13 +130,16 @@ public partial class OpenGen
                 }
             }
             _pendingGive[p.SteamID] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex);
-            p.GiveNamedItem(giveClass);
-
-            if (_pendingGive.ContainsKey(p.SteamID))
+            Server.NextFrame(() =>
             {
-                _pendingGive.Remove(p.SteamID);
-                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-            }
+                if (!p.IsValid || !p.PawnIsAlive) { _pendingGive.Remove(p.SteamID); return; }
+                p.GiveNamedItem(giveClass);
+                if (_pendingGive.ContainsKey(p.SteamID))
+                {
+                    _pendingGive.Remove(p.SteamID);
+                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+                }
+            });
         });
     }
 
@@ -325,13 +328,16 @@ public partial class OpenGen
             }
             _pendingGive[steamId] = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
                 charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
-            p.GiveNamedItem(giveClass);
-
-            if (_pendingGive.ContainsKey(steamId))
+            Server.NextFrame(() =>
             {
-                _pendingGive.Remove(steamId);
-                p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
-            }
+                if (!p.IsValid || !p.PawnIsAlive) { _pendingGive.Remove(steamId); return; }
+                p.GiveNamedItem(giveClass);
+                if (_pendingGive.ContainsKey(steamId))
+                {
+                    _pendingGive.Remove(steamId);
+                    p.PrintToChat($" {C.DarkRed}✗ {C.Default}Failed to give weapon.");
+                }
+            });
         });
     }
 
