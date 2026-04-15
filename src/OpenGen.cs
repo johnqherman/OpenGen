@@ -86,8 +86,9 @@ public partial class OpenGen : BasePlugin
     {
         _ = LoadSkinLegacyMapAsync();
         _ = LoadAgentMapAsync();
-        AddCommand("css_g",   "Give weapon skin by combo ID",    CmdGive);
-        AddCommand("css_gen", "Give weapon skin by explicit fields", CmdGiveParsed);
+        AddCommand("css_g",     "Give weapon skin by combo ID",        CmdGive);
+        AddCommand("css_gen",   "Give weapon skin by explicit fields", CmdGiveParsed);
+        AddCommand("css_combo", "Give full combo set by gencode",      CmdCombo);
         VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPre,  HookMode.Pre);
         VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPost, HookMode.Post);
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawnPost, HookMode.Post);
