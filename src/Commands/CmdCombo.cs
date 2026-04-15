@@ -37,7 +37,7 @@ public partial class OpenGen
                 response.EnsureSuccessStatusCode();
 
                 var json   = await response.Content.ReadAsStringAsync();
-                var parsed = JsonSerializer.Deserialize<GenCodeApiResponse>(json)?.ComboParts;
+                var parsed = JsonSerializer.Deserialize<GenCodeApiResponse>(json, _jsonOptions)?.ComboParts;
 
                 if (parsed == null || !parsed.Any(p => p.ItemId != 0))
                 {

@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Text.Json;
 using CounterStrikeSharp.API.Core;
 
 namespace OpenGen;
@@ -10,6 +11,11 @@ public partial class OpenGen : BasePlugin
     public override string ModuleAuthor  => "inspect server";
 
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        Converters = { new NullToZeroIntConverter() }
+    };
 
     private readonly Dictionary<int, bool>  _skinLegacyMap  = new();
     private readonly Dictionary<ulong, PendingSkin>                          _pendingGive    = new();
