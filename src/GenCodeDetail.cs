@@ -2,6 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace OpenGen;
 
+internal class GenCodeApiResponse
+{
+    [JsonPropertyName("genCodeDetail")]
+    public GenCodeDetail? GenCodeDetail { get; set; }
+}
+
 public class GenCodeDetail
 {
     [JsonPropertyName("Item_ID")]        public string ItemId        { get; set; } = "";

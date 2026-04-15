@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using CounterStrikeSharp.API;
@@ -46,12 +45,11 @@ public partial class OpenGen
             return;
         }
 
-        var gencode    = info.ArgByIndex(1);
-        var userId     = player.UserId;
-        var steamId    = player.SteamID;
-        var scriptPath = Path.Combine(ModuleDirectory, "gencode.sh");
+        var gencode = info.ArgByIndex(1);
+        var userId  = player.UserId;
+        var steamId = player.SteamID;
 
-        Task.Run(() => FetchAndGive(gencode, userId, steamId, scriptPath));
+        _ = FetchAndGiveAsync(gencode, userId, steamId);
     }
 
     private void CmdGiveParsed(CCSPlayerController? player, CommandInfo info)
@@ -143,7 +141,7 @@ public partial class OpenGen
         });
     }
 
-    private void FetchAndGive(string gencode, int? userId, ulong steamId, string scriptPath)
+    private async Task FetchAndGiveAsync(string gencode, int? userId, ulong steamId)
     {
         const int maxAttempts = 3;
 
@@ -154,35 +152,17 @@ public partial class OpenGen
         {
             try
             {
-                var psi = new ProcessStartInfo("bash", $"\"{scriptPath}\" {gencode}")
-                {
-                    RedirectStandardOutput = true,
-                    RedirectStandardError  = true,
-                    UseShellExecute        = false,
-                };
-                using var proc = Process.Start(psi)!;
-                var json = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit(6000);
+                var url      = $"https://api.cs2inspects.com/getGenCode?url={Uri.EscapeDataString(gencode)}";
+                var response = await _http.GetAsync(url);
+                response.EnsureSuccessStatusCode();
 
-                if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}")
-                {
-                    lastError = "Gencode not found";
-                    if (attempt < maxAttempts) { Thread.Sleep(800); continue; }
-                    break;
-                }
+                var json   = await response.Content.ReadAsStringAsync();
+                var parsed = JsonSerializer.Deserialize<GenCodeApiResponse>(json)?.GenCodeDetail;
 
-                if (json.Contains("\"error\""))
-                {
-                    lastError = "API returned an error";
-                    if (attempt < maxAttempts) { Thread.Sleep(800); continue; }
-                    break;
-                }
-
-                var parsed = JsonSerializer.Deserialize<GenCodeDetail>(json);
                 if (parsed == null || string.IsNullOrEmpty(parsed.ItemId))
                 {
-                    lastError = "Failed to parse response";
-                    if (attempt < maxAttempts) { Thread.Sleep(800); continue; }
+                    lastError = "Gencode not found";
+                    if (attempt < maxAttempts) { await Task.Delay(800); continue; }
                     break;
                 }
 
@@ -192,7 +172,7 @@ public partial class OpenGen
             catch (Exception ex)
             {
                 lastError = ex.Message;
-                if (attempt < maxAttempts) { Thread.Sleep(800); continue; }
+                if (attempt < maxAttempts) { await Task.Delay(800); continue; }
             }
         }
 
