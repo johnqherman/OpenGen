@@ -65,6 +65,14 @@ public partial class OpenGen
                 weapon.AcceptInput("SetBodygroup", value: $"body,{(IsLegacyModel(pending.PaintKit) ? 1 : 0)}");
                 weapon.AcceptInput("SubclassChange", value: weapon.DesignerName);
             }
+
+            var switchWeapon = weapon;
+            var switchPlayer = player;
+            Server.NextFrame(() =>
+            {
+                if (switchPlayer.IsValid && switchPlayer.PawnIsAlive && switchWeapon.IsValid)
+                    switchPlayer.ExecuteClientCommandFromServer($"use {switchWeapon.DesignerName}");
+            });
         }
         catch (Exception ex)
         {
