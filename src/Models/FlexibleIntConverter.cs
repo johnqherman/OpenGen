@@ -3,11 +3,13 @@ using System.Text.Json.Serialization;
 
 namespace OpenGen;
 
-internal class NullToZeroIntConverter : JsonConverter<int>
+internal class FlexibleIntConverter : JsonConverter<int>
 {
     public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null) return 0;
+        if (reader.TokenType == JsonTokenType.String)
+            return int.TryParse(reader.GetString(), out var s) ? s : 0;
         return reader.GetInt32();
     }
 
