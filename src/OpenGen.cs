@@ -14,7 +14,7 @@ public partial class OpenGen : BasePlugin
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
-        Converters = { new FlexibleIntConverter(), new FlexibleFloatConverter() }
+        Converters = { new FlexibleIntConverter(), new FlexibleFloatConverter(), new FlexibleStringConverter() }
     };
 
     private readonly Dictionary<int, bool>  _skinLegacyMap  = new();
