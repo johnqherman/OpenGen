@@ -4,6 +4,7 @@ public partial class OpenGen
 {
     private static readonly Dictionary<ushort, string> WeaponClasses = new()
     {
+        // weapons
         { 1,   "weapon_deagle" },
         { 2,   "weapon_elite" },
         { 3,   "weapon_fiveseven" },
@@ -38,6 +39,8 @@ public partial class OpenGen
         { 28,  "weapon_negev" },
         { 29,  "weapon_sawedoff" },
         { 35,  "weapon_nova" },
+
+        // knives
         { 42,  "weapon_knife" },
         { 59,  "weapon_knife_t" },
         { 500, "weapon_knife_bayonet" },

@@ -20,7 +20,7 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release
 
-      - name: Deploy via rsync
+      - name: Upload Files
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
         run: |
@@ -29,9 +29,20 @@ jobs:
           rsync -avz \
             -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
             bin/Release/net8.0/publish/OpenGen.dll \
-            scripts/gencode.sh \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/OpenGen/
+          rsync -avz \
+            -e "ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes" \
+            gamedata/opengen.json \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/gamedata/
+          rm /tmp/deploy_key
+
+      - name: Restart Game Server
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o IdentitiesOnly=yes \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "chmod +x /mnt/cs2/cs2-server/game/csgo/addons/counterstrikesharp/plugins/OpenGen/gencode.sh"
+            "sudo systemctl restart cs2-inspect.service"
           rm /tmp/deploy_key

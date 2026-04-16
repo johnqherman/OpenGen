@@ -4,8 +4,8 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
-    private const string SkinsUrl = "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json";
-    private const int CacheDays = 7;
+    private const string SkinsUrl  = "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json";
+    private const int    CacheDays = 7;
 
     private async Task LoadSkinLegacyMapAsync()
     {
@@ -26,7 +26,7 @@ public partial class OpenGen
             }
 
             using var stream = await _http.GetStreamAsync(SkinsUrl);
-            using var doc   = await JsonDocument.ParseAsync(stream);
+            using var doc    = await JsonDocument.ParseAsync(stream);
 
             var newMap = new Dictionary<int, bool>();
             foreach (var skin in doc.RootElement.EnumerateArray())
@@ -34,7 +34,6 @@ public partial class OpenGen
                 if (!skin.TryGetProperty("paint_index", out var piProp)) continue;
                 if (!int.TryParse(piProp.GetString(), out var paintIndex)) continue;
 
-                // legacy_model absent or true = legacy; false = not legacy
                 var legacy = !skin.TryGetProperty("legacy_model", out var legProp)
                              || legProp.GetBoolean();
                 newMap[paintIndex] = legacy;
@@ -56,8 +55,7 @@ public partial class OpenGen
         lock (_skinLegacyMap)
         {
             _skinLegacyMap.Clear();
-            foreach (var kv in map)
-                _skinLegacyMap[kv.Key] = kv.Value;
+            foreach (var kv in map) _skinLegacyMap[kv.Key] = kv.Value;
         }
     }
 

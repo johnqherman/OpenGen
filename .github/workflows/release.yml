@@ -23,10 +23,11 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p OpenGen
-          cp bin/Release/net8.0/publish/OpenGen.dll OpenGen/
-          cp bin/Release/net8.0/publish/scripts/gencode.sh OpenGen/
-          zip -r OpenGen-${{ github.ref_name }}.zip OpenGen/
+          mkdir -p counterstrikesharp/plugins/OpenGen
+          mkdir -p counterstrikesharp/gamedata
+          cp bin/Release/net8.0/publish/OpenGen.dll counterstrikesharp/plugins/OpenGen/
+          cp gamedata/opengen.json counterstrikesharp/gamedata/
+          zip -r OpenGen-${{ github.ref_name }}.zip counterstrikesharp/
 
       - name: Upload release asset
         run: gh release upload ${{ github.ref_name }} OpenGen-${{ github.ref_name }}.zip

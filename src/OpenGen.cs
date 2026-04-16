@@ -1,7 +1,6 @@
 using System.Net.Http;
+using System.Text.Json;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Memory;
-using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
 
 namespace OpenGen;
 
@@ -9,32 +8,45 @@ public partial class OpenGen : BasePlugin
 {
     public override string ModuleName    => "OpenGen";
     public override string ModuleVersion => "1.0.0";
-    public override string ModuleAuthor  => "inspect server";
-
-    private static readonly MemoryFunctionVoid<nint, string, float> SetOrAddAttr =
-        new(GameData.GetSignature("CAttributeList::SetOrAddAttributeValueByName"));
-
-    private static float UintAsFloat(uint v) => BitConverter.Int32BitsToSingle((int)v);
+    public override string ModuleAuthor  => "johnqherman";
 
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(30) };
 
-    private readonly Dictionary<int, bool> _skinLegacyMap = new();
-    private readonly Dictionary<ulong, PendingSkin> _pendingGive = new();
-    private ulong _nextItemId = 65578;
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        Converters =
+        {
+            new FlexibleIntConverter(),
+            new FlexibleFloatConverter(),
+            new FlexibleStringConverter()
+        }
+    };
 
-    private record PendingSkin(
-        string ClassName, int PaintKit, int Seed, float Wear,
-        (int Slot, int Id, float Wear)[] Stickers);
+    private readonly Dictionary<int, bool>                                              _skinLegacyMap    = new();
+    private readonly Dictionary<ulong, PendingSkin>                                     _pendingGive      = new();
+    private readonly Dictionary<ulong, (ushort DefIndex, PendingSkin Pending)>          _equippedGloves   = new();
+    private readonly Dictionary<ulong, nint>                                            _econItemViews    = new();
+    private readonly Dictionary<ulong, Dictionary<int, (float Wear, string StickerFp)>> _stickerWearCache = new();
+
+    private ulong _nextItemId = 65578;
 
     public override void Load(bool hotReload)
     {
         _ = LoadSkinLegacyMapAsync();
-        AddCommand("css_g", "Give weapon from cs2inspects.com gencode", CmdGive);
-        VirtualFunctions.GiveNamedItemFunc.Hook(OnGiveNamedItemPost, HookMode.Post);
+        _ = LoadAgentMapAsync();
+
+        AddCommand("css_g",     "Apply weapon skin from gencode",       CmdGen);
+        AddCommand("css_gen",   "Apply weapon skin from parsed fields", CmdGenParsed);
+        AddCommand("css_combo", "Apply full combo set from gencode",    CmdCombo);
+
+        RegisterGiveHooks();
+        RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawnPost, HookMode.Post);
+        RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnectPost, HookMode.Post);
     }
 
     public override void Unload(bool hotReload)
     {
-        VirtualFunctions.GiveNamedItemFunc.Unhook(OnGiveNamedItemPost, HookMode.Post);
+        UnregisterGiveHooks();
+        FreeAllEconItemViews();
     }
 }
