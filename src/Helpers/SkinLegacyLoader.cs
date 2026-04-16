@@ -4,8 +4,8 @@ namespace OpenGen;
 
 public partial class OpenGen
 {
-    private const string SkinsUrl = "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json";
-    private const int CacheDays = 7;
+    private const string SkinsUrl  = "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json";
+    private const int    CacheDays = 7;
 
     private async Task LoadSkinLegacyMapAsync()
     {
@@ -55,8 +55,7 @@ public partial class OpenGen
         lock (_skinLegacyMap)
         {
             _skinLegacyMap.Clear();
-            foreach (var kv in map)
-                _skinLegacyMap[kv.Key] = kv.Value;
+            foreach (var kv in map) _skinLegacyMap[kv.Key] = kv.Value;
         }
     }
 

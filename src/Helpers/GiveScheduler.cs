@@ -23,8 +23,8 @@ public partial class OpenGen
     private static CBasePlayerWeapon? FindSlotConflict(CCSPlayerController player, string targetClass)
     {
         var targetSlot = targetClass.Contains("knife") ? gear_slot_t.GEAR_SLOT_KNIFE
-            : PistolClasses.Contains(targetClass)     ? gear_slot_t.GEAR_SLOT_PISTOL
-            :                                           gear_slot_t.GEAR_SLOT_RIFLE;
+            : PistolClasses.Contains(targetClass)      ? gear_slot_t.GEAR_SLOT_PISTOL
+            :                                            gear_slot_t.GEAR_SLOT_RIFLE;
 
         return player.PlayerPawn.Value?.WeaponServices?.MyWeapons
             .Select(h => h.Value)
@@ -35,8 +35,13 @@ public partial class OpenGen
     private void ScheduleWeaponGive(CCSPlayerController p, ulong steamId, string giveClass, PendingSkin pending)
     {
         SilencedVariantAliases.TryGetValue(giveClass, out var engineName);
-        var isKnife  = giveClass.Contains("knife");
-        var existing = FindWeapon(p, isKnife ? n => n.Contains("knife") : n => n == giveClass || n == engineName);
+
+        var isKnife = giveClass.Contains("knife");
+        Func<string, bool> match = isKnife
+            ? n => n.Contains("knife")
+            : n => n == giveClass || n == engineName;
+        var existing = FindWeapon(p, match);
+
         if (existing != null)
         {
             var ws = p.PlayerPawn.Value?.WeaponServices?.As<CCSPlayer_WeaponServices>();
@@ -53,7 +58,8 @@ public partial class OpenGen
                 conflict.Remove();
             }
         }
-        _pendingGive[steamId] = pending;
+
+        _pendingGive[steamId] = pending with { ClassName = giveClass };
         Server.NextFrame(() =>
         {
             if (!p.IsValid || !p.PawnIsAlive) { _pendingGive.Remove(steamId); return; }
@@ -66,11 +72,10 @@ public partial class OpenGen
         });
     }
 
-    private static (int Slot, int Id, float Wear, float X, float Y, float R)[] DeduplicateStickerSlots(
-        (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers)
+    private static StickerSlot[] DeduplicateStickerSlots(StickerSlot[] stickers)
     {
         var used   = new HashSet<int>();
-        var result = new (int Slot, int Id, float Wear, float X, float Y, float R)[stickers.Length];
+        var result = new StickerSlot[stickers.Length];
         int next   = 0;
 
         for (int i = 0; i < stickers.Length; i++)

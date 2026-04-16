@@ -23,7 +23,7 @@ public partial class OpenGen
         )(weaponServicesPtr, weaponPtr, null, null);
     }
 
-    private static float UintAsFloat(uint v) => BitConverter.Int32BitsToSingle((int)v);
+    private static float UintAsFloat(int v) => BitConverter.Int32BitsToSingle(v);
 
     private void WriteAttributes(nint handle, PendingSkin pending)
     {
@@ -33,24 +33,23 @@ public partial class OpenGen
         foreach (var (slot, id, stickerWear, x, y, r) in pending.Stickers)
         {
             if (id == 0) continue;
-            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} id", UintAsFloat((uint)id));
-            if (slot == 4)
-                SetOrAddAttr.Invoke(handle, $"sticker slot {slot} schema", 0f);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} id",       UintAsFloat(id));
+            if (slot == 4) SetOrAddAttr.Invoke(handle, $"sticker slot {slot} schema",   0f);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} wear",     stickerWear);
             SetOrAddAttr.Invoke(handle, $"sticker slot {slot} offset x", x);
             SetOrAddAttr.Invoke(handle, $"sticker slot {slot} offset y", y);
-            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} wear",     stickerWear);
-            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} scale",    1f);
             SetOrAddAttr.Invoke(handle, $"sticker slot {slot} rotation", r);
+            SetOrAddAttr.Invoke(handle, $"sticker slot {slot} scale",    1f);
         }
         if (pending.CharmId != 0)
         {
-            SetOrAddAttr.Invoke(handle, "keychain slot 0 id",       UintAsFloat((uint)pending.CharmId));
-            SetOrAddAttr.Invoke(handle, "keychain slot 0 seed",     UintAsFloat((uint)pending.CharmSeed));
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 id",       UintAsFloat(pending.CharmId));
+            SetOrAddAttr.Invoke(handle, "keychain slot 0 seed",     UintAsFloat(pending.CharmSeed));
             SetOrAddAttr.Invoke(handle, "keychain slot 0 offset x", pending.CharmX);
             SetOrAddAttr.Invoke(handle, "keychain slot 0 offset y", pending.CharmY);
             SetOrAddAttr.Invoke(handle, "keychain slot 0 offset z", pending.CharmZ);
             if (pending.CharmSeed != 0)
-                SetOrAddAttr.Invoke(handle, "keychain slot 0 sticker", UintAsFloat((uint)pending.CharmSeed));
+                SetOrAddAttr.Invoke(handle, "keychain slot 0 sticker", UintAsFloat(pending.CharmSeed));
         }
         if (pending.StatTrakEnabled)
         {
@@ -70,6 +69,7 @@ public partial class OpenGen
 
         var isKnife = pending.ClassName.Contains("knife");
         var view    = new CEconItemView(ptr);
+
         view.Initialized         = true;
         view.ItemDefinitionIndex = pending.DefIndex;
 
@@ -77,6 +77,7 @@ public partial class OpenGen
         view.ItemID     = itemId;
         view.ItemIDLow  = (uint)(itemId & 0xFFFFFFFF);
         view.ItemIDHigh = (uint)(itemId >> 32);
+
         view.EntityQuality = isKnife ? 3 : 4;
 
         var attrs = view.NetworkedDynamicAttributes;
@@ -101,7 +102,7 @@ public partial class OpenGen
     }
 
     internal float GetBumpedWear(ulong steamId, int paintKit, float wear,
-        (int Slot, int Id, float Wear, float X, float Y, float R)[] stickers)
+        StickerSlot[] stickers)
     {
         var baseWear = wear > 0f ? wear : 0.01f;
 
@@ -184,11 +185,11 @@ public partial class OpenGen
 
             if (!_pendingGive.TryGetValue(player.SteamID, out var pending)) return HookResult.Continue;
 
-            var isKnife = pending.ClassName.Contains("knife");
-            var nameMatch = isKnife
+            var isKnife      = pending.ClassName.Contains("knife");
+            var resolvedName = SilencedVariantAliases.GetValueOrDefault(pending.ClassName, pending.ClassName);
+            var nameMatch    = isKnife
                 ? weapon.DesignerName.Contains("knife")
-                : weapon.DesignerName == pending.ClassName ||
-                  (SilencedVariantAliases.TryGetValue(pending.ClassName, out var alias) && weapon.DesignerName == alias);
+                : weapon.DesignerName == pending.ClassName || weapon.DesignerName == resolvedName;
             if (!nameMatch) return HookResult.Continue;
 
             _pendingGive.Remove(player.SteamID);
@@ -204,9 +205,8 @@ public partial class OpenGen
                 weapon.AcceptInput("SubclassChange", value: weapon.DesignerName);
             }
 
-            var isPistol = !isKnife && (PistolClasses.Contains(pending.ClassName) ||
-                (SilencedVariantAliases.TryGetValue(pending.ClassName, out var pistolAlias) && PistolClasses.Contains(pistolAlias)));
-            var slot = isKnife ? "slot3" : isPistol ? "slot2" : "slot1";
+            var isPistol     = !isKnife && PistolClasses.Contains(resolvedName);
+            var slot         = isKnife ? "slot3" : isPistol ? "slot2" : "slot1";
             var switchPlayer = player;
             Server.NextFrame(() =>
             {
@@ -242,20 +242,22 @@ public partial class OpenGen
         var item = pawn.EconGloves;
 
         item.ItemDefinitionIndex = 0;
-        item.ItemIDLow  = 0;
-        item.ItemIDHigh = 0;
-        item.ItemID     = 0;
-        item.AccountID  = 0;
+
+        item.ItemIDLow   = 0;
+        item.ItemIDHigh  = 0;
+        item.ItemID      = 0;
+        item.AccountID   = 0;
         item.Initialized = false;
+
         item.AttributeList.Attributes.RemoveAll();
         item.NetworkedDynamicAttributes.Attributes.RemoveAll();
 
         item.ItemDefinitionIndex = defIndex;
 
-        item.ItemIDLow  = (uint)(_nextItemId & 0xFFFFFFFF);
-        item.ItemIDHigh = (uint)(_nextItemId >> 32);
-        item.ItemID     = _nextItemId++;
-        item.AccountID  = (uint)player.SteamID;
+        item.ItemIDLow   = (uint)(_nextItemId & 0xFFFFFFFF);
+        item.ItemIDHigh  = (uint)(_nextItemId >> 32);
+        item.ItemID      = _nextItemId++;
+        item.AccountID   = (uint)player.SteamID;
         item.Initialized = true;
 
         item.AttributeList.Attributes.RemoveAll();

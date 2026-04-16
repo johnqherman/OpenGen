@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -28,50 +27,27 @@ public partial class OpenGen
 
     private async Task FetchAndGiveAsync(string gencode, int? userId, ulong steamId)
     {
-        const int maxAttempts = 3;
+        var (apiResponse, lastError) = await FetchGenCodeAsync(gencode);
+        var detail = apiResponse?.GenCodeDetail;
 
-        GenCodeDetail? detail = null;
-        string? lastError    = null;
-
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        if (detail == null || string.IsNullOrEmpty(detail.ItemId))
         {
-            try
+            var msg = lastError ?? "Gencode not found";
+            Server.NextFrame(() =>
             {
-                var url      = $"https://api.cs2inspects.com/getGenCode?url={Uri.EscapeDataString(gencode)}";
-                var response = await _http.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-
-                var json   = await response.Content.ReadAsStringAsync();
-                var parsed = JsonSerializer.Deserialize<GenCodeApiResponse>(json, _jsonOptions)?.GenCodeDetail;
-
-                if (parsed == null || string.IsNullOrEmpty(parsed.ItemId))
-                {
-                    lastError = "Gencode not found";
-                    if (attempt < maxAttempts) { await Task.Delay(800); continue; }
-                    break;
-                }
-
-                detail = parsed;
-                break;
-            }
-            catch (Exception ex)
-            {
-                lastError = ex.Message;
-                if (attempt < maxAttempts) { await Task.Delay(800); continue; }
-            }
-        }
-
-        if (detail == null)
-        {
-            Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}{lastError ?? "Unknown error"}."));
+                var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}{msg}.");
+            });
             return;
         }
 
         if (!ushort.TryParse(detail.ItemId, out var defIndex))
         {
-            Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Invalid item ID {C.Green}{detail.ItemId}{C.Default}."));
+            Server.NextFrame(() =>
+            {
+                var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}Invalid item ID {C.Green}{detail.ItemId}{C.Default}.");
+            });
             return;
         }
 
@@ -82,11 +58,11 @@ public partial class OpenGen
 
         var stickers = DeduplicateStickerSlots(new[]
         {
-            (detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
-            (detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
-            (detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
-            (detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
-            (detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
+            new StickerSlot(detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
+            new StickerSlot(detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
+            new StickerSlot(detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
+            new StickerSlot(detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
+            new StickerSlot(detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
         });
 
         var charmId         = detail.KeyChainId;
@@ -100,8 +76,8 @@ public partial class OpenGen
 
         if (IsGloveDefIndex(defIndex))
         {
-            var pending = new PendingSkin("", paintKit, seed, wear,
-                new (int, int, float, float, float, float)[5]);
+            var pending = new PendingSkin(
+                "", paintKit, seed, wear, new StickerSlot[5]);
             Server.NextFrame(() =>
             {
                 var p = Utilities.GetPlayerFromUserid(userId ?? 0);
@@ -127,8 +103,11 @@ public partial class OpenGen
                 return;
             }
 
-            Server.NextFrame(() => Utilities.GetPlayerFromUserid(userId ?? 0)
-                ?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item (defindex {C.Green}{detail.ItemId}{C.Default})."));
+            Server.NextFrame(() =>
+            {
+                var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item (defindex {C.Green}{detail.ItemId}{C.Default}).");
+            });
             return;
         }
 
@@ -142,8 +121,10 @@ public partial class OpenGen
                 ? (p.TeamNum == 2 ? "weapon_knife_t" : "weapon_knife")
                 : className;
 
-            var pending = new PendingSkin(giveClass, paintKit, seed, wear, stickers, defIndex,
-                charmId, charmSeed, charmX, charmY, charmZ, statTrakEnabled, statTrakValue, nameTag);
+            var pending = new PendingSkin(
+                giveClass, paintKit, seed, wear, stickers, defIndex,
+                charmId, charmSeed, charmX, charmY, charmZ,
+                statTrakEnabled, statTrakValue, nameTag);
             ScheduleWeaponGive(p, steamId, giveClass, pending);
         });
     }

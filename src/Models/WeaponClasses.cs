@@ -64,5 +64,4 @@ public partial class OpenGen
         { 525, "weapon_knife_skeleton" },
         { 526, "weapon_knife_kukri" },
     };
-
 }

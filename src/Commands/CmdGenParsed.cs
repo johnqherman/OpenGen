@@ -28,7 +28,7 @@ public partial class OpenGen
         int.TryParse(info.ArgByIndex(3), out var seed);
         float.TryParse(info.ArgByIndex(4), NumberStyles.Float, CultureInfo.InvariantCulture, out var wear);
 
-        var stickers = new (int Slot, int Id, float Wear, float X, float Y, float R)[5];
+        var stickers = new StickerSlot[5];
         for (int i = 0; i < 5; i++)
         {
             int argBase = 5 + i * 2;
@@ -36,7 +36,7 @@ public partial class OpenGen
             int.TryParse(info.ArgByIndex(argBase), out var id);
             float.TryParse(info.ArgByIndex(argBase + 1), NumberStyles.Float,
                            CultureInfo.InvariantCulture, out var stickerWear);
-            stickers[i] = (i, id, stickerWear, 0f, 0f, 0f);
+            stickers[i] = new StickerSlot(i, id, stickerWear, 0f, 0f, 0f);
         }
 
         Server.NextFrame(() =>

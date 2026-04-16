@@ -1,6 +1,6 @@
+using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using System.Text.Json;
 
 namespace OpenGen;
 
@@ -9,7 +9,7 @@ public partial class OpenGen
     private const string AgentsUrl =
         "https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/agents.json";
 
-    private readonly Dictionary<ulong, string> _agentModels = new();
+    private readonly Dictionary<ulong, string>  _agentModels     = new();
     private readonly Dictionary<ushort, string> _agentModelPaths = new();
 
     private async Task LoadAgentMapAsync()
@@ -31,7 +31,7 @@ public partial class OpenGen
             }
 
             using var stream = await _http.GetStreamAsync(AgentsUrl);
-            using var doc   = await JsonDocument.ParseAsync(stream);
+            using var doc    = await JsonDocument.ParseAsync(stream);
 
             var newMap = new Dictionary<ushort, string>();
             foreach (var agent in doc.RootElement.EnumerateArray())
@@ -100,44 +100,7 @@ public partial class OpenGen
         lock (_agentModelPaths)
         {
             _agentModelPaths.Clear();
-            foreach (var kv in map)
-                _agentModelPaths[kv.Key] = kv.Value;
+            foreach (var kv in map) _agentModelPaths[kv.Key] = kv.Value;
         }
-    }
-
-    private HookResult OnPlayerSpawnPost(EventPlayerSpawn ev, GameEventInfo _)
-    {
-        var player = ev.Userid;
-        if (player == null || !player.IsValid) return HookResult.Continue;
-        if (!_agentModels.TryGetValue(player.SteamID, out var model)) return HookResult.Continue;
-
-        Server.NextFrame(() =>
-        {
-            if (player.IsValid && player.PawnIsAlive)
-            {
-                player.PlayerPawn.Value?.SetModel(model);
-                if (_equippedGloves.TryGetValue(player.SteamID, out var gloves))
-                    Server.NextFrame(() =>
-                    {
-                        if (player.IsValid && player.PawnIsAlive)
-                            ApplyGloves(player, gloves.DefIndex, gloves.Pending);
-                    });
-            }
-        });
-
-        return HookResult.Continue;
-    }
-
-    private HookResult OnPlayerDisconnectPost(EventPlayerDisconnect ev, GameEventInfo _)
-    {
-        if (ev.Userid != null)
-        {
-            var steamId = ev.Userid.SteamID;
-            _agentModels.Remove(steamId);
-            _equippedGloves.Remove(steamId);
-            _stickerWearCache.Remove(steamId);
-            FreeEconItemView(steamId);
-        }
-        return HookResult.Continue;
     }
 }
