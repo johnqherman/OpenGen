@@ -17,11 +17,11 @@ A [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) plugin 
 
 ## Commands
 
-| Command                                     | Description                                                                          |
-| ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `!g <gencode>`                              | Apply a weapon skin from a [CS2Inspects](https://cs2inspects.com) gencode            |
-| `!gen <index> <skin> <pattern> <float> ...` | Apply a weapon skin with explicit parameters                                         |
-| `!combo <gencode>`                          | Apply a full loadout (primary, secondary, knife, gloves, agent) from a combo gencode |
+| Command             | Description                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `!g <gencode>`      | Apply a weapon skin from a [CS2Inspects](https://cs2inspects.com) gencode            |
+| `!gen <parameters>` | Apply a weapon skin with explicit parameters                                         |
+| `!combo <gencode>`  | Apply a full loadout (primary, secondary, knife, gloves, agent) from a combo gencode |
 
 **Examples:**
 
