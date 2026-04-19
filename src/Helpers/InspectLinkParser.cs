@@ -12,10 +12,16 @@ internal static class InspectLinkParser
         data  = default;
         error = null;
 
-        var decoded = Uri.UnescapeDataString(input.Trim());
+        var decoded        = Uri.UnescapeDataString(input.Trim());
+        bool nearChatLimit = decoded.Length >= 118;
+        const string chatMsg = "Inspect link hit the chat character limit. " +
+                               "Use the console (css_g <hex>) or get a short code at cs2inspects.com.";
 
         if (!TryExtractHex(decoded, out var hex, out error))
+        {
+            if (nearChatLimit && error != null) error = chatMsg;
             return false;
+        }
 
         if (error != null)
             return false;
@@ -27,7 +33,7 @@ internal static class InspectLinkParser
         }
         catch (FormatException)
         {
-            error = "Invalid inspect link: malformed hex string.";
+            error = nearChatLimit ? chatMsg : "Invalid inspect link: malformed hex string.";
             return false;
         }
 
@@ -39,7 +45,7 @@ internal static class InspectLinkParser
         }
         catch
         {
-            error = "Invalid inspect link: could not decode item data.";
+            error = nearChatLimit ? chatMsg : "Invalid inspect link: could not decode item data.";
             return false;
         }
     }
