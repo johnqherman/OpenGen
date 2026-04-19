@@ -72,4 +72,28 @@ public partial class OpenGen
         });
     }
 
+    private static StickerSlot[] DeduplicateStickerSlots(StickerSlot[] stickers)
+    {
+        var used   = new HashSet<int>();
+        var result = new StickerSlot[stickers.Length];
+        int next   = 0;
+
+        for (int i = 0; i < stickers.Length; i++)
+        {
+            var s = stickers[i];
+            if (!used.Contains(s.Slot))
+            {
+                used.Add(s.Slot);
+                result[i] = s;
+            }
+            else
+            {
+                while (next < 5 && used.Contains(next)) next++;
+                used.Add(next);
+                result[i] = s with { Slot = next };
+            }
+        }
+
+        return result;
+    }
 }

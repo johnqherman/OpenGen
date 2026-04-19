@@ -18,7 +18,7 @@ public partial class OpenGen
             return;
         }
 
-        var gencode = info.ArgString.Trim();
+        var gencode = info.ArgString.Contains("//") ? info.ArgString.Trim() : info.ArgByIndex(1);
         var userId  = player.UserId;
         var steamId = player.SteamID;
 
@@ -90,14 +90,14 @@ public partial class OpenGen
                        CultureInfo.InvariantCulture, out var apiWear);
 
         GiveItem(apiDefIndex, apiPaintKit, apiSeed, apiWear,
-            new[]
+            DeduplicateStickerSlots(new[]
             {
                 new StickerSlot(detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
                 new StickerSlot(detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
                 new StickerSlot(detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
                 new StickerSlot(detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
                 new StickerSlot(detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
-            }.Where(s => s.Id != 0).ToArray(),
+            }.Where(s => s.Id != 0).ToArray()),
             detail.KeyChainId, detail.KeyChainPattern, detail.KeyChainX, detail.KeyChainY, detail.KeyChainZ,
             detail.StatTrakEnabled == "1", detail.StatTrakValue, detail.NameTag,
             userId, steamId);

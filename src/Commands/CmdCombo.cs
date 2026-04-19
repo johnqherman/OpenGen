@@ -44,14 +44,14 @@ public partial class OpenGen
         foreach (var part in parts)
         {
             var defIndex = (ushort)part.ItemId;
-            var stickers = new[]
+            var stickers = DeduplicateStickerSlots(new[]
             {
                 new StickerSlot(part.Sticker1Slot, part.Sticker1Id, part.Sticker1Value, part.Sticker1X, part.Sticker1Y, part.Sticker1R),
                 new StickerSlot(part.Sticker2Slot, part.Sticker2Id, part.Sticker2Value, part.Sticker2X, part.Sticker2Y, part.Sticker2R),
                 new StickerSlot(part.Sticker3Slot, part.Sticker3Id, part.Sticker3Value, part.Sticker3X, part.Sticker3Y, part.Sticker3R),
                 new StickerSlot(part.Sticker4Slot, part.Sticker4Id, part.Sticker4Value, part.Sticker4X, part.Sticker4Y, part.Sticker4R),
                 new StickerSlot(part.Sticker5Slot, part.Sticker5Id, part.Sticker5Value, part.Sticker5X, part.Sticker5Y, part.Sticker5R),
-            }.Where(s => s.Id != 0).ToArray();
+            }.Where(s => s.Id != 0).ToArray());
 
             if (IsGloveDefIndex(defIndex))
             {
