@@ -34,17 +34,14 @@ public partial class OpenGen
             var seed     = (int)inspectData.PaintSeed;
             var wear     = inspectData.Wear;
 
-            var rawStickers = new StickerSlot[inspectData.Stickers.Length];
-            for (int i = 0; i < inspectData.Stickers.Length; i++)
-            {
-                var s = inspectData.Stickers[i];
-                rawStickers[i] = new StickerSlot((int)s.Slot, (int)s.Id, s.Wear, s.OffsetX, s.OffsetY, s.Rotation);
-            }
+            var stickers = inspectData.Stickers
+                .Select(s => new StickerSlot((int)s.Slot, (int)s.Id, s.Wear, s.OffsetX, s.OffsetY, s.Rotation))
+                .ToArray();
 
             var kc = inspectData.Keychains.Length > 0 ? inspectData.Keychains[0] : default;
 
             GiveItem(defIndex, paintKit, seed, wear,
-                DeduplicateStickerSlots(rawStickers),
+                stickers,
                 (int)kc.Id, (int)kc.Pattern, kc.OffsetX, kc.OffsetY, kc.OffsetZ,
                 inspectData.Quality == 9,
                 inspectData.Quality == 9 ? (int)inspectData.KillEaterValue : 0,
@@ -93,14 +90,14 @@ public partial class OpenGen
                        CultureInfo.InvariantCulture, out var apiWear);
 
         GiveItem(apiDefIndex, apiPaintKit, apiSeed, apiWear,
-            DeduplicateStickerSlots(new[]
+            new[]
             {
                 new StickerSlot(detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
                 new StickerSlot(detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
                 new StickerSlot(detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
                 new StickerSlot(detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
                 new StickerSlot(detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
-            }),
+            }.Where(s => s.Id != 0).ToArray(),
             detail.KeyChainId, detail.KeyChainPattern, detail.KeyChainX, detail.KeyChainY, detail.KeyChainZ,
             detail.StatTrakEnabled == "1", detail.StatTrakValue, detail.NameTag,
             userId, steamId);
