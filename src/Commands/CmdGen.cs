@@ -18,7 +18,7 @@ public partial class OpenGen
             return;
         }
 
-        var gencode = info.ArgByIndex(1);
+        var gencode = info.ArgString.Trim();
         var userId  = player.UserId;
         var steamId = player.SteamID;
 
