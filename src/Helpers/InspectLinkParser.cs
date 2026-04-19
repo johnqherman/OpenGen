@@ -15,7 +15,7 @@ internal static class InspectLinkParser
         var decoded        = Uri.UnescapeDataString(input.Trim());
         bool nearChatLimit = decoded.Length >= 118;
         const string chatMsg = "Inspect link hit the chat character limit. " +
-                               "Use the console (css_g <hex>) or get a short code at cs2inspects.com.";
+                               "Paste the full link into console, or get a short code at cs2inspects.com.";
 
         if (!TryExtractHex(decoded, out var hex, out error))
         {
