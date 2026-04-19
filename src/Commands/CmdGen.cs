@@ -34,9 +34,9 @@ public partial class OpenGen
             var seed     = (int)inspectData.PaintSeed;
             var wear     = inspectData.Wear;
 
-            var stickers = inspectData.Stickers
+            var stickers = DeduplicateStickerSlots(inspectData.Stickers
                 .Select(s => new StickerSlot((int)s.Slot, (int)s.Id, s.Wear, s.OffsetX, s.OffsetY, s.Rotation))
-                .ToArray();
+                .ToArray());
 
             var kc = inspectData.Keychains.Length > 0 ? inspectData.Keychains[0] : default;
 
