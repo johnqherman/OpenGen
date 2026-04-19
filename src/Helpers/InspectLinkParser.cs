@@ -4,8 +4,7 @@ namespace OpenGen;
 
 internal static class InspectLinkParser
 {
-    private const string ConsolePrefix      = "csgo_econ_action_preview ";
-    private const string SteamUrlPrefix     = "steam://rungame/730/";
+    private const string ConsolePrefix       = "csgo_econ_action_preview ";
     private const string SteamActionFragment = "+csgo_econ_action_preview ";
 
     public static bool TryParse(string input, out ParsedInspectData data, out string? error)
@@ -13,7 +12,9 @@ internal static class InspectLinkParser
         data  = default;
         error = null;
 
-        if (!TryExtractHex(input.Trim(), out var hex, out error))
+        var decoded = Uri.UnescapeDataString(input.Trim());
+
+        if (!TryExtractHex(decoded, out var hex, out error))
             return false;
 
         if (error != null)
@@ -60,7 +61,7 @@ internal static class InspectLinkParser
             return ValidateHexString(hex, out error);
         }
 
-        if (input.StartsWith(SteamUrlPrefix, StringComparison.OrdinalIgnoreCase))
+        if (input.StartsWith("steam://", StringComparison.OrdinalIgnoreCase))
         {
             var idx = input.IndexOf(SteamActionFragment, StringComparison.OrdinalIgnoreCase);
             if (idx < 0) return false;
