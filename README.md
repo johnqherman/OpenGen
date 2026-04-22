@@ -33,7 +33,7 @@ A [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) plugin 
 
 ## Requirements
 
-- [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v1.0.365 or later
+- [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp) v1.0.366 or later
 
 ## Installation
 
