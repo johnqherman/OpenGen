@@ -88,7 +88,7 @@ public partial class OpenGen
             }
             else
             {
-                while (next < stickers.Length && used.Contains(next)) next++;
+                while (next < 5 && used.Contains(next)) next++;
                 used.Add(next);
                 result[i] = s with { Slot = next };
             }

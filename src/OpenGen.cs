@@ -35,9 +35,11 @@ public partial class OpenGen : BasePlugin
         _ = LoadSkinLegacyMapAsync();
         _ = LoadAgentMapAsync();
 
-        AddCommand("css_g",     "Apply weapon skin from gencode",       CmdGen);
-        AddCommand("css_gen",   "Apply weapon skin from parsed fields", CmdGenParsed);
-        AddCommand("css_combo", "Apply full combo set from gencode",    CmdCombo);
+        AddCommand("css_g",       "Apply weapon skin from gencode or inspect link", CmdGen);
+        AddCommand("css_i",       "Apply weapon skin from inspect link",         CmdGen);
+        AddCommand("css_inspect", "Apply weapon skin from inspect link",         CmdGen);
+        AddCommand("css_gen",     "Apply weapon skin from parsed fields",        CmdGenParsed);
+        AddCommand("css_combo",   "Apply full combo set from gencode",           CmdCombo);
 
         RegisterGiveHooks();
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawnPost, HookMode.Post);

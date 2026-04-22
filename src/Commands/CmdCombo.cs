@@ -51,7 +51,7 @@ public partial class OpenGen
                 new StickerSlot(part.Sticker3Slot, part.Sticker3Id, part.Sticker3Value, part.Sticker3X, part.Sticker3Y, part.Sticker3R),
                 new StickerSlot(part.Sticker4Slot, part.Sticker4Id, part.Sticker4Value, part.Sticker4X, part.Sticker4Y, part.Sticker4R),
                 new StickerSlot(part.Sticker5Slot, part.Sticker5Id, part.Sticker5Value, part.Sticker5X, part.Sticker5Y, part.Sticker5R),
-            });
+            }.Where(s => s.Id != 0).ToArray());
 
             if (IsGloveDefIndex(defIndex))
             {
@@ -70,8 +70,8 @@ public partial class OpenGen
             if (defIndex is 5600 or 5200)
             {
                 agentModel = defIndex == 5600
-                    ? "characters/models/ctm_sas/ctm_sas.vmdl"
-                    : "characters/models/tm_phoenix/tm_phoenix.vmdl";
+                    ? "agents/models/ctm_sas/ctm_sas.vmdl"
+                    : "agents/models/tm_phoenix/tm_phoenix.vmdl";
                 continue;
             }
 

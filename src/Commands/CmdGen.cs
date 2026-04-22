@@ -14,11 +14,11 @@ public partial class OpenGen
 
         if (info.ArgCount < 2)
         {
-            player.PrintToChat(" Usage: !g <gencode>  (gencode from cs2inspects.com)");
+            player.PrintToChat(" Usage: !g <gencode or inspect link>");
             return;
         }
 
-        var gencode = info.ArgByIndex(1);
+        var gencode = info.ArgString.Contains("//") ? info.ArgString.Trim() : info.ArgByIndex(1);
         var userId  = player.UserId;
         var steamId = player.SteamID;
 
@@ -27,6 +27,39 @@ public partial class OpenGen
 
     private async Task FetchAndGiveAsync(string gencode, int? userId, ulong steamId)
     {
+        if (InspectLinkParser.TryParse(gencode, out var inspectData, out var parseError))
+        {
+            var defIndex = (ushort)inspectData.DefIndex;
+            var paintKit = (int)inspectData.PaintIndex;
+            var seed     = (int)inspectData.PaintSeed;
+            var wear     = inspectData.Wear;
+
+            var stickers = DeduplicateStickerSlots(inspectData.Stickers
+                .Select(s => new StickerSlot((int)s.Slot, (int)s.Id, s.Wear, s.OffsetX, s.OffsetY, s.Rotation))
+                .ToArray());
+
+            var kc = inspectData.Keychains.Length > 0 ? inspectData.Keychains[0] : default;
+
+            GiveItem(defIndex, paintKit, seed, wear,
+                stickers,
+                (int)kc.Id, (int)kc.Pattern, kc.OffsetX, kc.OffsetY, kc.OffsetZ,
+                inspectData.Quality == 9,
+                inspectData.Quality == 9 ? (int)inspectData.KillEaterValue : 0,
+                inspectData.CustomName,
+                userId, steamId);
+            return;
+        }
+
+        if (parseError != null)
+        {
+            Server.NextFrame(() =>
+            {
+                var p = Utilities.GetPlayerFromUserid(userId ?? 0);
+                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}{parseError}");
+            });
+            return;
+        }
+
         var (apiResponse, lastError) = await FetchGenCodeAsync(gencode);
         var detail = apiResponse?.GenCodeDetail;
 
@@ -41,7 +74,7 @@ public partial class OpenGen
             return;
         }
 
-        if (!ushort.TryParse(detail.ItemId, out var defIndex))
+        if (!ushort.TryParse(detail.ItemId, out var apiDefIndex))
         {
             Server.NextFrame(() =>
             {
@@ -51,33 +84,34 @@ public partial class OpenGen
             return;
         }
 
-        int.TryParse(detail.SkinId,    out var paintKit);
-        int.TryParse(detail.PatternId, out var seed);
+        int.TryParse(detail.SkinId,    out var apiPaintKit);
+        int.TryParse(detail.PatternId, out var apiSeed);
         float.TryParse(detail.FloatValue, NumberStyles.Float,
-                       CultureInfo.InvariantCulture, out var wear);
+                       CultureInfo.InvariantCulture, out var apiWear);
 
-        var stickers = DeduplicateStickerSlots(new[]
-        {
-            new StickerSlot(detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
-            new StickerSlot(detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
-            new StickerSlot(detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
-            new StickerSlot(detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
-            new StickerSlot(detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
-        });
+        GiveItem(apiDefIndex, apiPaintKit, apiSeed, apiWear,
+            DeduplicateStickerSlots(new[]
+            {
+                new StickerSlot(detail.Sticker1Slot, detail.Sticker1Id, detail.Sticker1Value, detail.Sticker1X, detail.Sticker1Y, detail.Sticker1R),
+                new StickerSlot(detail.Sticker2Slot, detail.Sticker2Id, detail.Sticker2Value, detail.Sticker2X, detail.Sticker2Y, detail.Sticker2R),
+                new StickerSlot(detail.Sticker3Slot, detail.Sticker3Id, detail.Sticker3Value, detail.Sticker3X, detail.Sticker3Y, detail.Sticker3R),
+                new StickerSlot(detail.Sticker4Slot, detail.Sticker4Id, detail.Sticker4Value, detail.Sticker4X, detail.Sticker4Y, detail.Sticker4R),
+                new StickerSlot(detail.Sticker5Slot, detail.Sticker5Id, detail.Sticker5Value, detail.Sticker5X, detail.Sticker5Y, detail.Sticker5R),
+            }.Where(s => s.Id != 0).ToArray()),
+            detail.KeyChainId, detail.KeyChainPattern, detail.KeyChainX, detail.KeyChainY, detail.KeyChainZ,
+            detail.StatTrakEnabled == "1", detail.StatTrakValue, detail.NameTag,
+            userId, steamId);
+    }
 
-        var charmId         = detail.KeyChainId;
-        var charmSeed       = detail.KeyChainPattern;
-        var charmX          = detail.KeyChainX;
-        var charmY          = detail.KeyChainY;
-        var charmZ          = detail.KeyChainZ;
-        var statTrakEnabled = detail.StatTrakEnabled == "1";
-        var statTrakValue   = detail.StatTrakValue;
-        var nameTag         = detail.NameTag;
-
+    private void GiveItem(
+        ushort defIndex, int paintKit, int seed, float wear, StickerSlot[] stickers,
+        int charmId, int charmSeed, float charmX, float charmY, float charmZ,
+        bool statTrakEnabled, int statTrakValue, string nameTag,
+        int? userId, ulong steamId)
+    {
         if (IsGloveDefIndex(defIndex))
         {
-            var pending = new PendingSkin(
-                "", paintKit, seed, wear, new StickerSlot[5]);
+            var pending = new PendingSkin("", paintKit, seed, wear, new StickerSlot[5]);
             Server.NextFrame(() =>
             {
                 var p = Utilities.GetPlayerFromUserid(userId ?? 0);
@@ -98,15 +132,15 @@ public partial class OpenGen
             if (defIndex is 5600 or 5200)
             {
                 ApplyAgentModel(userId, steamId, defIndex == 5600
-                    ? "characters/models/ctm_sas/ctm_sas.vmdl"
-                    : "characters/models/tm_phoenix/tm_phoenix.vmdl");
+                    ? "agents/models/ctm_sas/ctm_sas.vmdl"
+                    : "agents/models/tm_phoenix/tm_phoenix.vmdl");
                 return;
             }
 
             Server.NextFrame(() =>
             {
                 var p = Utilities.GetPlayerFromUserid(userId ?? 0);
-                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item (defindex {C.Green}{detail.ItemId}{C.Default}).");
+                p?.PrintToChat($" {C.DarkRed}✗ {C.Default}Unsupported item (defindex {C.Green}{defIndex}{C.Default}).");
             });
             return;
         }
