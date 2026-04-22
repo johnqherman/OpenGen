@@ -132,8 +132,8 @@ public partial class OpenGen
             if (defIndex is 5600 or 5200)
             {
                 ApplyAgentModel(userId, steamId, defIndex == 5600
-                    ? "characters/models/ctm_sas/ctm_sas.vmdl"
-                    : "characters/models/tm_phoenix/tm_phoenix.vmdl");
+                    ? "agents/models/ctm_sas/ctm_sas.vmdl"
+                    : "agents/models/tm_phoenix/tm_phoenix.vmdl");
                 return;
             }
 

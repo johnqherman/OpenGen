@@ -3,6 +3,7 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Memory.DynamicFunctions;
+using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace OpenGen;
@@ -273,18 +274,11 @@ public partial class OpenGen
         SetOrAddAttr.Invoke(staticAttrs, "set item texture seed",   (float)pending.Seed);
         SetOrAddAttr.Invoke(staticAttrs, "set item texture wear",   pending.Wear > 0f ? pending.Wear : 0.01f);
 
-        var currentModel = pawn.CBodyComponent?.SceneNode?.GetSkeletonInstance()?.ModelState.ModelName ?? "";
-        if (!string.IsNullOrEmpty(currentModel))
-        {
-            pawn.SetModel("characters/models/tm_jumpsuit/tm_jumpsuit_varianta.vmdl");
-            pawn.SetModel(currentModel);
-        }
-
-        pawn.AcceptInput("SetBodygroup", value: "default_gloves,0");
-        Server.NextFrame(() =>
+        pawn.AcceptInput("SetBodygroup", value: "first_or_third_person,0");
+        AddTimer(0.2f, () =>
         {
             if (!player.IsValid || !player.PawnIsAlive) return;
-            player.PlayerPawn.Value?.AcceptInput("SetBodygroup", value: "default_gloves,1");
-        });
+            player.PlayerPawn.Value?.AcceptInput("SetBodygroup", value: "first_or_third_person,1");
+        }, TimerFlags.STOP_ON_MAPCHANGE);
     }
 }
